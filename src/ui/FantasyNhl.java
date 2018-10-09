@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
-public class FantasyNhl implements Serializable{
+public class FantasyNhl implements Serializable {
     // TODO 2: Add League command phrase once multiple leagues are supported
     private static final String COMMAND_CREATE_LEAGUE = "league";
     private static final String COMMAND_LOAD_LEAGUE = "load";
@@ -69,12 +69,18 @@ public class FantasyNhl implements Serializable{
                 } else {
                     System.out.println("Which player do you want to add? \n" +
                             "Please type in their full name.");
-                    System.out.println(league.getAvailablePlayerNames());
+                    System.out.println("Skaters: " + league.getAvailableSkaterNames());
+                    System.out.println("Goalies: " + league.getAvailableGoalieNames());
                     String playerName = scanner.nextLine();
 
                     if (league.containsAvailablePlayerName(playerName)) {
                         league.addPlayerToFantasyTeam(teamName, playerName);
-                        System.out.println("Success! " + playerName + " was added to your fantasy team.");
+                        Position p = league.teamLookup(teamName).playerLookup(playerName).getPlayerPosition();
+                        System.out.print("Success! ");
+                        if (p.equals(Position.G)) {
+                            System.out.print("Goalie ");
+                        } else System.out.print("Skater ");
+                        System.out.println(playerName + " was added to your fantasy team.");
                     } else {
                         System.out.println(playerName + " is not available in this league.");
                     }
@@ -120,7 +126,7 @@ public class FantasyNhl implements Serializable{
             Position position = Position.valueOf(partsOfLine.get(2));
             int weekFantasyPoints = Integer.parseInt(partsOfLine.get(3));
             int totalFantasyPoints = Integer.parseInt(partsOfLine.get(4));
-            if (position.equals("G")) {
+            if (position.equals(Position.G)) {
                 double savePercentage = Double.parseDouble(partsOfLine.get(5));
                 double goalsAgainstAverage = Double.parseDouble(partsOfLine.get(6));
 

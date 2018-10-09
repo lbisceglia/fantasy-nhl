@@ -2,6 +2,7 @@ package model.League;
 
 import model.Loadable;
 import model.Player.Player;
+import model.Player.Position;
 import model.Team.PlayerList;
 import model.Saveable;
 import model.Team.Team;
@@ -44,6 +45,30 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
     public ArrayList<String> getAvailablePlayerNames() {
         return availablePlayers.getPlayerNames();
     }
+
+    // TODO: write tests for this method
+    // EFFECTS: Returns a list of the players names available in this league
+    public ArrayList<String> getAvailableSkaterNames() {
+        ArrayList<String> availableSkaterNames = new ArrayList<>();
+        for (Player p : availablePlayers.getPlayers()) {
+            if (!p.getPlayerPosition().equals(Position.G)) {
+                availableSkaterNames.add(p.getPlayerName());
+            }
+        }
+        return availableSkaterNames;
+    }
+
+    // EFFECTS: Returns a list of the players names available in this league
+    public ArrayList<String> getAvailableGoalieNames() {
+        ArrayList<String> availableSkaterNames = new ArrayList<>();
+        for (Player p : availablePlayers.getPlayers()) {
+            if (p.getPlayerPosition().equals(Position.G)) {
+                availableSkaterNames.add(p.getPlayerName());
+            }
+        }
+        return availableSkaterNames;
+    }
+
 
     @Override
     // EFFECTS: Returns true if the team already exists in this league
