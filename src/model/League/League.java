@@ -1,31 +1,45 @@
 package model.League;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
 import model.Loadable;
+import model.Player.Goalie;
 import model.Player.Player;
-import model.Player.Position;
-import model.Team.PlayerList;
+import model.Player.Skater;
 import model.Saveable;
+import model.Team.GoalieList;
+import model.Team.SkaterList;
 import model.Team.Team;
+import model.exceptions.DuplicateMatchException;
+import model.exceptions.NoMatchException;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 
 public class League implements TeamList, Loadable, Saveable, Serializable {
-    HashSet<Team> participants;
-    PlayerList availablePlayers;
+    private static final String savePath = "C:/Users/Lorenzo Bisceglia/Google Drive/1 - School/1 - BCS/CPSC 210/Project/projectw1_team29/src";
 
-    public League(PlayerList availablePlayers) {
-        this.participants = new HashSet<>();
-        this.availablePlayers = availablePlayers;
+    ArrayList<Team> participants;
+    //TODO: Change these back to SkaterList, GoalieList when I figure out the Json
+    SkaterList availableSkaters;
+    GoalieList availableGoalies;
+
+    // EFFECTS: Constructs a league with the availableSkaters and availableGoalies
+    // TODO: Change parameter types back to SkaterList, GoalieList when I figure out the Json
+    public League(SkaterList availableSkaters, GoalieList availableGoalies) {
+        participants = new ArrayList();
+        this.availableSkaters = availableSkaters;
+        this.availableGoalies = availableGoalies;
     }
 
     @Override
     // EFFECTS: Returns a list of teams in this league
-    public HashSet<Team> getTeams() {
+    public ArrayList<Team> getTeams() {
         return participants;
     }
 
+    // EFFECTS: Returns a list of team names in this league
     @Override
     public ArrayList<String> getTeamNames() {
         ArrayList<String> participants = new ArrayList<>();
@@ -36,37 +50,49 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
         return participants;
     }
 
+    // EFFECTS: Returns a list of the skaters available in this league
+    public ArrayList<Skater> getAvailableSkaters() {
+        return availableSkaters.getSkaters();
+    }
+
+    // EFFECTS: Returns a list of the skaters available in this league
+    public ArrayList<Goalie> getAvailableGoalies() {
+        return availableGoalies.getGoalies();
+    }
+
     // EFFECTS: Returns a list of the players available in this league
-    public PlayerList getAvailablePlayers() {
+    public ArrayList<Player> getAvailablePlayers() {
+        ArrayList<Player> availablePlayers = new ArrayList<>();
+        availablePlayers.addAll(getAvailableSkaters());
+        availablePlayers.addAll(getAvailableGoalies());
         return availablePlayers;
     }
 
     // EFFECTS: Returns a list of the players names available in this league
     public ArrayList<String> getAvailablePlayerNames() {
-        return availablePlayers.getPlayerNames();
+        ArrayList<String> availablePlayerNames = new ArrayList<>();
+        availablePlayerNames.addAll(getAvailableSkaterNames());
+        availablePlayerNames.addAll(getAvailableGoalieNames());
+        return availablePlayerNames;
     }
 
     // TODO: write tests for this method
     // EFFECTS: Returns a list of the players names available in this league
     public ArrayList<String> getAvailableSkaterNames() {
         ArrayList<String> availableSkaterNames = new ArrayList<>();
-        for (Player p : availablePlayers.getPlayers()) {
-            if (!p.getPlayerPosition().equals(Position.G)) {
-                availableSkaterNames.add(p.getPlayerName());
-            }
+        for (Skater s : availableSkaters.getSkaters()) {
+            availableSkaterNames.add(s.getPlayerName());
         }
         return availableSkaterNames;
     }
 
     // EFFECTS: Returns a list of the players names available in this league
     public ArrayList<String> getAvailableGoalieNames() {
-        ArrayList<String> availableSkaterNames = new ArrayList<>();
-        for (Player p : availablePlayers.getPlayers()) {
-            if (p.getPlayerPosition().equals(Position.G)) {
-                availableSkaterNames.add(p.getPlayerName());
-            }
+        ArrayList<String> availableGoalieNames = new ArrayList<>();
+        for (Goalie g : availableGoalies.getGoalies()) {
+            availableGoalieNames.add(g.getPlayerName());
         }
-        return availableSkaterNames;
+        return availableGoalieNames;
     }
 
 
@@ -89,8 +115,12 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
         return false;
     }
 
+
+    // EFFECTS: Returns true if the player name matches an available player in this league
+    //          Returns false otherwise
     public boolean containsAvailablePlayerName(String playerName) {
-        return availablePlayers.containsPlayerName(playerName);
+        return (availableSkaters.containsPlayerName(playerName) ||
+                availableGoalies.containsPlayerName(playerName));
     }
 
 
@@ -98,22 +128,32 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
     // MODIFIES: this
     // EFFECTS: Creates a new Team adds it to the league if the name isn't already taken
     //          Does nothing if name is already taken
-    public void addTeam(String teamName) {
-        if (!this.containsTeamName(teamName)) {
+    public void addTeam(String teamName) throws DuplicateMatchException {
+        boolean b = this.containsTeamName(teamName);
+        if (!b) {
             Team team = new Team(teamName);
             participants.add(team);
+        } else {
+            throw new DuplicateMatchException();
         }
     }
 
 
     // MODIFIES: this, TODO: ADD WHAT ELSE IT MODIFIES
     // EFFECTS: Adds a player to a Team and removes them from the League available players list
-    public void addPlayerToFantasyTeam(String teamName, String playerName) {
+    public void addPlayerToFantasyTeam(String teamName, String playerName) throws NoMatchException {
         if (this.containsTeamName(teamName)) {
             if (this.containsAvailablePlayerName(playerName)) {
                 // The player name is valid and player added to the team, removed from available players
-                this.teamLookup(teamName).addPlayer(availablePlayers.playerLookup(playerName));
-                this.removeAvailablePlayer(playerName);
+                if (availableGoalies.containsPlayerName(playerName)) {
+                    this.teamLookup(teamName).addGoalie(availableGoalies.goalieLookup(playerName));
+                    this.removeAvailableGoalie(playerName);
+                } else {
+                    this.teamLookup(teamName).addSkater(availableSkaters.skaterLookup(playerName));
+                    this.removeAvailableSkater(playerName);
+                }
+            } else {
+                throw new NoMatchException();
             }
         }
     }
@@ -131,23 +171,37 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
 
 
     // MODIFIES: this
-    // EFFECTS: Removes player from the list if they are on the list
-    //          Does nothing if player is not on the list
-    private void removeAvailablePlayer(String playerName) {
+    // EFFECTS: Removes skater from the list if they are on the list
+    //          Does nothing if skater is not on the list
+    private void removeAvailableSkater(String playerName) {
         if (this.containsAvailablePlayerName(playerName)) {
-            availablePlayers.removePlayer(availablePlayers.playerLookup(playerName));
+            availableSkaters.removeSkater(availableSkaters.skaterLookup(playerName));
+        }
+    }
+
+    // MODIFIES: this
+    // EFFECTS: Removes goalie from the list if they are on the list
+    //          Does nothing if goalie is not on the list
+    private void removeAvailableGoalie(String playerName) {
+        if (this.containsAvailablePlayerName(playerName)) {
+            availableGoalies.removeGoalie(availableGoalies.goalieLookup(playerName));
         }
     }
 
     @Override
     // MODIFIES: this
-    // EFFECTS: removes team from the fantasy league, removes its players and adds its players back to the available players list
+    // EFFECTS: removes team from the fantasy league, removes its players
+    //          adds its skaters back to the available skaters, goalies back to available goalies
     public void removeTeam(Team team) {
         participants.remove(team);
-        for (Player p : team.getPlayers()) {
-            team.removePlayer(p);
-            availablePlayers.addPlayer(p);
+        for (Skater s : team.getSkaters()) {
+            team.removeSkater(s);
+            availableSkaters.addSkater(s);
         }
+        for (Goalie g : team.getGoalies()) {
+            team.removeGoalie(g);
+        }
+        participants.remove(team);
     }
 
     // EFFECTS: Prints the team name and roster for every team in the league
@@ -156,6 +210,7 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
             t.printTeamAndPlayers();
         }
     }
+
 
     @Override
     //Modeled after Object Stream tutorial, 2018-10-01 [https://www.mkyong.com/java/how-to-read-and-write-java-object-to-a-file/]
@@ -167,7 +222,9 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
 
             // Write objects to file
             o.writeObject(this.participants);
-            o.writeObject(this.availablePlayers);
+            o.writeObject(this.availableSkaters);
+            o.writeObject(this.availableGoalies);
+
 
             o.close();
             f.close();
@@ -189,11 +246,14 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
             ObjectInputStream oi = new ObjectInputStream(fi);
 
             // Read objects
-            HashSet<Team> participants1 = (HashSet<Team>) oi.readObject();
-            PlayerList availableplayers1 = (PlayerList) oi.readObject();
+            ArrayList<Team> participants1 = (ArrayList<Team>) oi.readObject();
+            //TODO: Change back to SkaterList, GoalieList when Json Figured out
+            SkaterList availableSkaters1 = (Team) oi.readObject();
+            GoalieList availableGoalies1 = (Team) oi.readObject();
 
             this.participants = participants1;
-            this.availablePlayers = availableplayers1;
+            this.availableSkaters = availableSkaters1;
+            this.availableGoalies = availableGoalies1;
 
             oi.close();
             fi.close();
@@ -203,8 +263,29 @@ public class League implements TeamList, Loadable, Saveable, Serializable {
         } catch (IOException e) {
             System.out.println("Error initializing stream");
         } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
+        }
+    }
+
+    public static League loadLeague() {
+        try (Reader reader = new FileReader(savePath + "/league.json")) {
+            JsonReader jsonReader = new JsonReader(reader);
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            Gson gson = gsonBuilder.create();
+
+            League restoredLeague = gson.fromJson(jsonReader, League.class);
+
+            return restoredLeague;
+        } catch (FileNotFoundException e) {
+            SkaterList availableSkaters = new Team("Available Players");
+            GoalieList availableGoalies = new Team("Available Goalies");
+            return new League(availableSkaters, availableGoalies);
+        } catch (IOException e) {
+            System.out.println("Error initializing stream");
+            e.printStackTrace();
+            SkaterList availableSkaters = new Team("Available Players");
+            GoalieList availableGoalies = new Team("Available Goalies");
+            return new League(availableSkaters, availableGoalies);
         }
     }
 }

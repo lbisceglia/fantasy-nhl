@@ -1,47 +1,48 @@
 package model.Player;
 
+import model.exceptions.InvalidPositionException;
+
 import java.io.Serializable;
 
-public abstract class Player implements Serializable{
-    protected final String name;
+public abstract class Player implements Serializable {
+    protected String name;
     protected Position position;
     protected int weekFantasyPoints;
     protected int totalFantasyPoints;
 
-    public Player(String name, Position position, int weekFantasyPoints, int totalFantasyPoints){
+
+    // EFFECTS: Construct a player with the given name and position
+    public Player(String name, Position position) throws InvalidPositionException {
         this.name = name;
-        this.position = position;
-        if(weekFantasyPoints >= 0) {
-            this.weekFantasyPoints = weekFantasyPoints;
+        if (this instanceof Skater && position.equals(Position.G)) {
+            throw new InvalidPositionException("A skater cannot be a goalie.");
         } else {
-            this.weekFantasyPoints = 0;
+            this.position = position;
         }
-        if(totalFantasyPoints >= 0) {
-            this.totalFantasyPoints = totalFantasyPoints;
-        } else {
-            this.totalFantasyPoints = 0;
-        }
+        // TODO: create method for calculating FantasyPoints
+        weekFantasyPoints = 0;
+        totalFantasyPoints = 0;
     }
 
     //getters
 
-    // EFFECTS: Return the skater's name
+    // EFFECTS: Return the player's name
     public String getPlayerName() {
-        return this.name;
+        return name;
     }
 
-    // EFFECTS: Return the skater's hockey position
+    // EFFECTS: Return the player's hockey position
     public Position getPlayerPosition() {
-        return this.position;
+        return position;
     }
 
-    // EFFECTS: Return the number of fantasy points the skater earned this week
+    // EFFECTS: Return the number of fantasy points the player earned this week
     public int getWeekFantasyPoints() {
-        return this.weekFantasyPoints;
+        return weekFantasyPoints;
     }
 
-    // EFFECTS: Return the number of fantasy points the skater earned so far this season
+    // EFFECTS: Return the number of fantasy points the player earned so far this season
     public int getTotalFantasyPoints() {
-        return this.totalFantasyPoints;
+        return totalFantasyPoints;
     }
 }

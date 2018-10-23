@@ -2,6 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/gradle-nhl.iml" filepath="$PROJECT_DIR$/.idea/modules/gradle-nhl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/gradle-nhl_main.iml" filepath="$PROJECT_DIR$/.idea/modules/gradle-nhl_main.iml" group="gradle-nhl" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/gradle-nhl_test.iml" filepath="$PROJECT_DIR$/.idea/modules/gradle-nhl_test.iml" group="gradle-nhl" />
       <module fileurl="file://$PROJECT_DIR$/projectw1_team29.iml" filepath="$PROJECT_DIR$/projectw1_team29.iml" />
     </modules>
   </component>

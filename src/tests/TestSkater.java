@@ -2,45 +2,66 @@ package tests;
 
 import model.Player.Position;
 import model.Player.Skater;
+import model.exceptions.InvalidStatException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static junit.framework.TestCase.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TestSkater {
-
-    private Skater McDavid;
-    private Skater Boeser;
-    private Skater Ovechkin;
-    private Skater Hedman;
-    private Skater Josi;
+public class TestSkater extends TestPlayer {
 
     @BeforeEach
     public void setup() {
-        McDavid = new Skater("Connor McDavid", Position.C, 0, 0, 41, 67);
-        Boeser = new Skater("Brock Boeser", Position.RW, 0, 0, 29, 26);
-        Ovechkin = new Skater("Alexander Ovechkin", Position.LW, 0, 0, 49, 38);
-        Hedman = new Skater("Victor Hedman", Position.D,0, 0, 17, 46);
-        Josi = new Skater("Roman Josi", Position.D,0, 0, 14, 39);
+        super.setup();
     }
 
     @Test
-    public void testConstructor() {
-        Skater McDavid2 = new Skater("Connor McDavid",Position.C, 0, 0, -41, -67);
+    public void testBasicConstructor() {
+        Skater McDavid2 = new Skater("Connor McDavid", Position.C);
         assertEquals(McDavid2.getTotalGoals(), 0);
         assertEquals(McDavid2.getTotalAssists(), 0);
-        Skater McDavid3 = new Skater("Connor McDavid",Position.C, 0, 0, -1, -1);
-        assertEquals(McDavid3.getTotalGoals(), 0);
-        assertEquals(McDavid3.getTotalAssists(), 0);
-        Skater McDavid4 = new Skater("Connor McDavid",Position.C, 0, 0, 0, 0);
-        assertEquals(McDavid4.getTotalGoals(), 0);
-        assertEquals(McDavid4.getTotalAssists(), 0);
-        Skater McDavid5 = new Skater("Connor McDavid",Position.C, 0, 0, 1, 1);
-        assertEquals(McDavid5.getTotalGoals(), 1);
-        assertEquals(McDavid5.getTotalAssists(), 1);
-        Skater McDavid6 = new Skater("Connor McDavid", Position.C, 0, 0, 41, 67);
-        assertEquals(McDavid6.getTotalGoals(), 41);
-        assertEquals(McDavid6.getTotalAssists(), 67);
+    }
+
+    @Test
+    public void testConstructorPositiveOnlyNoExceptions() {
+        try {
+            Skater McDavid2 = new Skater("Connor McDavid", Position.C, 41, 67);
+            assertEquals(McDavid2.getTotalGoals(), 41);
+            assertEquals(McDavid2.getTotalAssists(), 67);
+        } catch (InvalidStatException e) {
+            fail("No Exception should be thrown -- all parameters valid.");
+        }
+    }
+
+    @Test
+    public void testConstructorNegativeGoalsException() {
+        try {
+            Skater McDavid2 = new Skater("Connor McDavid", Position.C, -1, 67);
+            fail("Exception should be thrown for negative goals.");
+        } catch (InvalidStatException e) {
+            // Nothing required here
+        }
+    }
+
+    @Test
+    public void testConstructorNegativeAssistsException() {
+        try {
+            Skater McDavid2 = new Skater("Connor McDavid", Position.C, 41, -1);
+            fail("Exception should be thrown for negative assists.");
+        } catch (InvalidStatException e) {
+            // Nothing required here
+        }
+    }
+
+    @Test
+    public void testConstructorNegativeGoalsAndAssistsException() {
+        try {
+            Skater McDavid2 = new Skater("Connor McDavid", Position.C, -1, -1);
+            fail("Exception should be thrown for negative goals (thrown before assists).");
+        } catch (InvalidStatException e) {
+            // Nothing required here
+        }
     }
 
     @Test
@@ -50,27 +71,38 @@ public class TestSkater {
     }
 
     @Test
-    public void testSettersPositive() {
+    public void testSettersPositiveOnlyNoExceptions() {
         int goals = 100;
         int assists = 80;
-        assertEquals(McDavid.getTotalGoals(), 41);
-        McDavid.setTotalGoals(goals);
-        assertEquals(McDavid.getTotalGoals(), goals);
-        assertEquals(Boeser.getTotalAssists(), 26);
-        Boeser.setTotalAssists(assists);
-        assertEquals(Boeser.getTotalAssists(), assists);
+        try {
+            McDavid.setTotalGoals(goals);
+            assertEquals(McDavid.getTotalGoals(), goals);
+            McDavid.setTotalAssists(assists);
+            assertEquals(McDavid.getTotalAssists(), assists);
+        } catch (InvalidStatException e) {
+            fail("Exception should not be thrown -- all parameters valid.");
+        }
     }
 
     @Test
-    public void testSettersNegative() {
+    public void testSetGoalsNegativeGoalsException() {
         int goals = -75;
-        int assists = -50;
-        assertEquals(McDavid.getTotalGoals(), 41);
-        McDavid.setTotalGoals(goals);
-        assertEquals(McDavid.getTotalGoals(), 41);
-        assertEquals(Boeser.getTotalAssists(), 26);
-        Boeser.setTotalAssists(assists);
-        assertEquals(Boeser.getTotalAssists(), 26);
+        try {
+            McDavid.setTotalGoals(goals);
+            fail("Exception should have been thrown for negative goals.");
+        } catch (InvalidStatException e) {
+            // Nothing required here
+        }
     }
 
+    @Test
+    public void testSetAssistsNegativeAssistsException() {
+        int assists = -100;
+        try {
+            McDavid.setTotalAssists(assists);
+            fail("Exception should have been thrown for negative goals.");
+        } catch (InvalidStatException e) {
+            // Nothing required here
+        }
+    }
 }

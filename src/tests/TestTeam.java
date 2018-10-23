@@ -1,7 +1,5 @@
 package tests;
 
-import model.Player.Goalie;
-import model.Player.Position;
 import model.Player.Skater;
 import model.Team.Team;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,47 +11,37 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TestTeam {
+public class TestTeam extends TestPlayer{
 
     private Team team1;
     private Team baseRoster;
     private Team teamOfOne;
     private Team roster;
     private ArrayList<String> baseList;
-    private Skater McDavid;
     private Skater Boeser;
-    private Skater Ovechkin;
-    private Skater Hedman;
-    private Skater Josi;
-    private Goalie Jones;
     private Skater Horvat;
 
     @BeforeEach
     public void setup() {
+        super.setup();
+
+
         baseRoster = new Team("Base");
         teamOfOne = new Team("One");
         roster = new Team("Roster");
 
-        baseList = new ArrayList<String>();
+        baseList = new ArrayList<>();
 
         team1 = new Team("Lorenzo's Team");
 
-        McDavid = new Skater("Connor McDavid", Position.C, 0, 0 ,41, 67);
-        Boeser = new Skater("Brock Boeser", Position.RW, 0, 0, 29, 26);
-        Ovechkin = new Skater("Alexander Ovechkin", Position.LW, 0, 0, 49, 38);
-        Hedman = new Skater("Victor Hedman", Position.D, 0, 0, 17, 46);
-        Josi = new Skater("Roman Josi", Position.D, 0,0, 14, 39);
-        Jones = new Goalie("Martin Jones", 0, 0, 0, 0);
-        Horvat = new Skater("Bo Horvat", Position.C, 0, 0, 22, 22);
+        teamOfOne.addSkater(Horvat);
 
-        teamOfOne.addPlayer(Horvat);
-
-        roster.addPlayer(McDavid);
-        roster.addPlayer(Boeser);
-        roster.addPlayer(Ovechkin);
-        roster.addPlayer(Hedman);
-        roster.addPlayer(Josi);
-        roster.addPlayer(Jones);
+        roster.addSkater(McDavid);
+        roster.addSkater(Boeser);
+        roster.addSkater(Ovechkin);
+        roster.addSkater(Hedman);
+        roster.addSkater(Josi);
+        roster.addGoalie(Jones);
     }
 
     @Test
@@ -74,12 +62,6 @@ public class TestTeam {
     @Test
     public void testGetPlayersEmpty() {
         assertFalse(baseRoster.getPlayers().contains(McDavid));
-        assertFalse(baseRoster.getPlayers().contains(Boeser));
-        assertFalse(baseRoster.getPlayers().contains(Ovechkin));
-        assertFalse(baseRoster.getPlayers().contains(Hedman));
-        assertFalse(baseRoster.getPlayers().contains(Josi));
-        assertFalse(baseRoster.getPlayers().contains(Jones));
-        assertFalse(baseRoster.getPlayers().contains(Horvat));
     }
 
     @Test
@@ -158,74 +140,42 @@ public class TestTeam {
     @Test
     public void testAddPlayerEmpty() {
         assertEquals(baseRoster.getSize(), 0);
-        baseRoster.addPlayer(Horvat);
+        baseRoster.addSkater(Horvat);
         assertEquals(baseRoster.getSize(), 1);
     }
 
     @Test
     public void testAddPlayerSeveralValid() {
         assertEquals(roster.getSize(), 6);
-        roster.addPlayer(Horvat);
+        roster.addSkater(Horvat);
         assertEquals(roster.getSize(), 7);
     }
 
     @Test
     public void testAddPlayerSeveralInvalid() {
         assertEquals(roster.getSize(), 6);
-        roster.addPlayer(McDavid);
+        roster.addSkater(McDavid);
         assertEquals(roster.getSize(), 6);
     }
 
     @Test
     public void testRemovePlayerEmpty() {
         assertEquals(baseRoster.getSize(), 0);
-        baseRoster.removePlayer(Horvat);
+        baseRoster.removeSkater(Horvat);
         assertEquals(baseRoster.getSize(), 0);
     }
 
     @Test
     public void testRemovePlayerSeveralValid() {
         assertEquals(roster.getSize(), 6);
-        roster.removePlayer(McDavid);
+        roster.removeSkater(McDavid);
         assertEquals(roster.getSize(), 5);
     }
 
     @Test
     public void testRemovePlayerSeveralInvalid() {
         assertEquals(roster.getSize(), 6);
-        roster.removePlayer(Horvat);
+        roster.removeSkater(Horvat);
         assertEquals(roster.getSize(), 6);
     }
-
-    //    @Test
-//    public void testGetTotalTeamGoalsEmpty() {
-//        assertEquals(baseRoster.getTotalTeamGoals(), 0);
-//    }
-//
-//    @Test
-//    public void testGetTotalTeamGoalsZero() {
-//        baseRoster.addPlayer(Jones);
-//        assertEquals(baseRoster.getTotalTeamGoals(), 0);
-//    }
-//
-//    @Test
-//    public void testGetTotalTeamGoalsSeveral() {
-//        assertEquals(roster.getTotalTeamGoals(), 150);
-//    }
-//
-//    @Test
-//    public void testGetTotalTeamAssistsEmpty() {
-//        assertEquals(baseRoster.getTotalTeamAssists(), 0);
-//    }
-//
-//    @Test
-//    public void testGetTotalTeamAssistsZero() {
-//        baseRoster.addPlayer(Jones);
-//        assertEquals(baseRoster.getTotalTeamAssists(), 0);
-//    }
-//
-//    @Test
-//    public void testGetTotalTeamAssistsSeveral() {
-//        assertEquals(roster.getTotalTeamAssists(), 216);
-//    }
 }

@@ -3,12 +3,13 @@ package tests;
 import model.League.League;
 import model.Loadable;
 import model.Saveable;
-import model.Team.PlayerList;
+import model.Team.GoalieList;
+import model.Team.SkaterList;
 import model.Team.Team;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
-import java.util.HashSet;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,20 +18,23 @@ public class TestLoadSave implements Loadable, Saveable, Serializable {
 
     Team team1 = new Team("Lorenzo's Team");
     Team team2 = new Team("Donato's Team");
-    PlayerList availablePlayers = new Team("Available Players");;
-    League league = new League(availablePlayers);
-    HashSet<Team> participants = league.getTeams();
+    SkaterList availableSkaters = new Team("Available Skaters");
+    GoalieList availableGoalies = new Team("Available Goalies");
+    League league = new League(availableSkaters, availableGoalies);
+    ArrayList<Team> participants = league.getTeams();
 
     //Modeled after Object Stream tutorial, 2018-10-01 [https://www.mkyong.com/java/how-to-read-and-write-java-object-to-a-file/]
     // TODO: add specification and tests for this method
     public void save() {
         try {
-            FileOutputStream f = new FileOutputStream(new File("fantasyLeagueTest.txt"));
+            FileOutputStream f = new FileOutputStream(new File("fantasyLeague.txt"));
             ObjectOutputStream o = new ObjectOutputStream(f);
 
             // Write objects to file
             o.writeObject(this.participants);
-            o.writeObject(this.availablePlayers);
+            o.writeObject(this.availableSkaters);
+            o.writeObject(this.availableGoalies);
+
 
             o.close();
             f.close();
@@ -48,15 +52,17 @@ public class TestLoadSave implements Loadable, Saveable, Serializable {
     // TODO: add specification and tests for this method
     public void load() {
         try {
-            FileInputStream fi = new FileInputStream(new File("fantasyLeagueTest.txt"));
+            FileInputStream fi = new FileInputStream(new File("fantasyLeague.txt"));
             ObjectInputStream oi = new ObjectInputStream(fi);
 
             // Read objects
-            HashSet<Team> participants1 = (HashSet<Team>) oi.readObject();
-            PlayerList availableplayers1 = (PlayerList) oi.readObject();
+            ArrayList<Team> participants1 = (ArrayList<Team>) oi.readObject();
+            SkaterList availableSkaters1 = (SkaterList) oi.readObject();
+            GoalieList availableGoalies1 = (GoalieList) oi.readObject();
 
             this.participants = participants1;
-            this.availablePlayers = availableplayers1;
+            this.availableSkaters = availableSkaters1;
+            this.availableGoalies = availableGoalies1;
 
             oi.close();
             fi.close();
