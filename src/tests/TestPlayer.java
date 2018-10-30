@@ -16,6 +16,8 @@ public class TestPlayer {
     protected Skater Ovechkin;
     protected Skater Hedman;
     protected Skater Josi;
+    protected Skater Boeser;
+    protected Skater Horvat;
     protected Goalie Jones;
 
     @BeforeEach
@@ -24,6 +26,8 @@ public class TestPlayer {
         Ovechkin = new Skater("Alexander Ovechkin", Position.LW, 49, 38);
         Hedman = new Skater("Victor Hedman", Position.D, 17, 46);
         Josi = new Skater("Roman Josi", Position.D, 14, 39);
+        Boeser = new Skater("Brock Boeser", Position.RW, 29, 26);
+        Horvat = new Skater("Bo Horvat", Position.C, 22, 22);
         Jones = new Goalie("Martin Jones", 0.915, 2.55);
     }
 

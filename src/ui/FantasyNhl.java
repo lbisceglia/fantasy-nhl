@@ -2,10 +2,9 @@ package ui;
 
 import model.League.League;
 import model.Player.Goalie;
+import model.Player.Player;
 import model.Player.Position;
 import model.Player.Skater;
-import model.Team.GoalieList;
-import model.Team.SkaterList;
 import model.Team.Team;
 import model.exceptions.DuplicateMatchException;
 import model.exceptions.NoMatchException;
@@ -14,10 +13,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class FantasyNhl implements Serializable {
     // TODO 2: Add League command phrase once multiple leagues are supported
@@ -35,13 +31,14 @@ public class FantasyNhl implements Serializable {
     private static final String OPTION_GO_BACK = " or type \"" + COMMAND_GO_BACK + "\" to return to the previous menu.";
 
     Scanner scanner = new Scanner(System.in);
+    League league;
 
-    public FantasyNhl(SkaterList availableSkaters, GoalieList availableGoalies) throws IOException {
+    public FantasyNhl(Map<Team, ArrayList<Player>> teamPlayerMap, ArrayList<Player> availablePlayers) throws IOException {
 
         // Modeled after B04-LoggingCalculator starter file
         String operation;
         System.out.println("Welcome to DreamTeam NHL!");
-        League league = new League(availableSkaters, availableGoalies);
+        league = new League(teamPlayerMap, availablePlayers);
         league.load();
 //        League league = loadLeague();
 
@@ -53,8 +50,12 @@ public class FantasyNhl implements Serializable {
             // User creates a Team
             if (operation.equals(COMMAND_CREATE_TEAM)) {
                 while (true) {
-                    System.out.println("Here's the list of teams in the league:");
-                    System.out.println(league.getTeamNames());
+                    if (atLeastOneTeam()) {
+                        System.out.println("Here's the list of teams in the league:");
+                        System.out.println(league.getTeamNames());
+                    } else {
+                        System.out.println("You're the first team in the league!");
+                    }
                     System.out.println("Enter a unique team name" + OPTION_GO_BACK);
                     String teamName = scanner.nextLine();
 
@@ -67,17 +68,15 @@ public class FantasyNhl implements Serializable {
                             break;
                         } catch (DuplicateMatchException e) {
                             System.out.println("Sorry, that team name is already in the league.");
-                        } finally {
-                            System.out.println("Whoa! Real creative name there!");
                         }
                     }
                 }
-            // User views the teams in the league
-            } else if (operation.equals(COMMAND_VIEW_TEAM_NAMES)) {
+                // User views the teams in the league
+            } else if (operation.equals(COMMAND_VIEW_TEAM_NAMES) && atLeastOneTeam()) {
                 league.printTeamsAndPlayers();
 
-            // User adds a player to a team
-            } else if (operation.equals(COMMAND_ADD_PLAYER)) {
+                // User adds a player to a team
+            } else if (operation.equals(COMMAND_ADD_PLAYER) && atLeastOneTeam()) {
                 while (true) {
                     System.out.println("Enter the number of the team you want to add the player to " + OPTION_GO_BACK);
                     System.out.println("Here's the list of teams:");
@@ -96,8 +95,7 @@ public class FantasyNhl implements Serializable {
                             int index = isInteger(teamNumber) - 1;
 
                             if (index >= 0 && index < league.getTeams().size()) {
-                                Team team = league.getTeams().get(index);
-                                String teamName = team.getTeamName();
+                                String teamName = league.getTeamNames().get(index);
 
                                 System.out.println("Which player do you want to add to " + teamName + "? \n" +
                                         "Please type in their full name " + OPTION_GO_BACK);
@@ -110,7 +108,7 @@ public class FantasyNhl implements Serializable {
                                 } else {
                                     try {
                                         league.addPlayerToFantasyTeam(teamName, playerName);
-                                        Position p = league.teamLookup(teamName).playerLookup(playerName).getPlayerPosition();
+                                        Position p = league.getPlayerOnATeam(playerName, league.teamLookup(teamName)).getPlayerPosition();
                                         System.out.println("Success! " + playerName + " (" + p + ") was added to " + teamName + ".");
                                         break;
                                     } catch (NoMatchException e) {
@@ -147,23 +145,26 @@ public class FantasyNhl implements Serializable {
     }
 
     private void printMenu() {
-        // TODO 2: Add League command once multiple leagues are supported
-        // System.out.println("To create a new fantasy league, type \"" + COMMAND_CREATE_LEAGUE + "\".");
-        System.out.println("To add a fantasy team to the league, type \"" + COMMAND_CREATE_TEAM + "\".");
-        System.out.println("To view the names of the fantasy teams in the league, type \"" + COMMAND_VIEW_TEAM_NAMES + "\".");
-        System.out.println("To add a player to an existing team, type \"" + COMMAND_ADD_PLAYER + "\".");
-        // TODO 4: Create Leaderboard functionality
+            // TODO 2: Add League command once multiple leagues are supported
+            // System.out.println("To create a new fantasy league, type \"" + COMMAND_CREATE_LEAGUE + "\".");
+            System.out.println("[" + COMMAND_CREATE_TEAM + "]   - Create Fantasy Team");
+        if (league.size() > 0) {
+            System.out.println("[" + COMMAND_VIEW_TEAM_NAMES + "]   - View Fantasy Teams");
+            System.out.println("[" + COMMAND_ADD_PLAYER + "] - Add a player");
+        }
+            // TODO 4: Create Leaderboard functionality
 //        System.out.println("To view this week's leaderboard, type \"" + COMMAND_VIEW_WEEK_LEADER + "\".");
 //        System.out.println("To view the overall leaderboard, type \"" + COMMAND_VIEW_OVERALL_LEADER + "\".");
-        System.out.println("To quit without saving, type \"" + COMMAND_QUIT + "\".");
-        System.out.println("To save and quit, type \"" + COMMAND_SAVE_AND_QUIT + "\".");
+            System.out.println("[" + COMMAND_QUIT + "]   - Quit");
+            System.out.println("[" + COMMAND_SAVE_AND_QUIT + "]   - Save & Quit");
     }
 
     public static void main(String[] args) throws IOException {
         //Modeled after P4-FileReaderWriter starter file
         List<String> lines = Files.readAllLines(Paths.get("availablePlayers.txt"));
-        SkaterList availableSkaters = new Team("Available Skaters");
-        GoalieList availableGoalies = new Team("Available Goalies");
+
+        Map<Team, ArrayList<Player>> teamPlayerMap = new HashMap<>();
+        ArrayList<Player> availablePlayers = new ArrayList<>();
 
         for (String line : lines) {
             ArrayList<String> partsOfLine = splitOnSpace(line);
@@ -174,18 +175,18 @@ public class FantasyNhl implements Serializable {
                 double goalsAgainstAverage = Double.parseDouble(partsOfLine.get(4));
 
                 Goalie g = new Goalie(name, savePercentage, goalsAgainstAverage);
-                availableGoalies.addGoalie(g);
+                availablePlayers.add(g);
 
             } else {
                 int totalGoals = Integer.parseInt(partsOfLine.get(3));
                 int totalAssists = Integer.parseInt(partsOfLine.get(4));
 
                 Skater s = new Skater(name, position, totalGoals, totalAssists);
-                availableSkaters.addSkater(s);
+                availablePlayers.add(s);
             }
 
         }
-        new FantasyNhl(availableSkaters, availableGoalies);
+        new FantasyNhl(teamPlayerMap, availablePlayers);
 //        new FantasyNhl();
 
     }
@@ -198,6 +199,11 @@ public class FantasyNhl implements Serializable {
     //TODO: Specify
     public int isInteger(String answer) throws NumberFormatException {
         return Integer.parseInt(answer);
+    }
+
+    // EFFECTS: Returns true if there is at least one Team in the League
+    private boolean atLeastOneTeam() {
+        return league.size() > 0;
     }
 
 }

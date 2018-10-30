@@ -3,6 +3,7 @@ package model.Player;
 import model.exceptions.InvalidPositionException;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public abstract class Player implements Serializable {
     protected String name;
@@ -44,5 +45,19 @@ public abstract class Player implements Serializable {
     // EFFECTS: Return the number of fantasy points the player earned so far this season
     public int getTotalFantasyPoints() {
         return totalFantasyPoints;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Player player = (Player) o;
+        return Objects.equals(name, player.name);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(name);
     }
 }
