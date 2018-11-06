@@ -3,11 +3,10 @@ package tests;
 import model.Player.Goalie;
 import model.Player.Position;
 import model.Player.Skater;
-import model.exceptions.InvalidPositionException;
+import model.Team.Team;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static junit.framework.TestCase.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestPlayer {
@@ -19,6 +18,7 @@ public class TestPlayer {
     protected Skater Boeser;
     protected Skater Horvat;
     protected Goalie Jones;
+    protected Team team;
 
     @BeforeEach
     public void setup() {
@@ -29,29 +29,21 @@ public class TestPlayer {
         Boeser = new Skater("Brock Boeser", Position.RW, 29, 26);
         Horvat = new Skater("Bo Horvat", Position.C, 22, 22);
         Jones = new Goalie("Martin Jones", 0.915, 2.55);
+        team = new Team("team");
+
     }
 
     @Test
-    public void testConstructorPlayerValidPositionNoExceptions() {
-        try {
-            assertEquals(McDavid.getPlayerName(), "Connor McDavid");
-            assertEquals(McDavid.getPlayerPosition(), Position.C);
-            assertEquals(McDavid.getTotalGoals(), 41);
-            assertEquals(McDavid.getTotalAssists(), 67);
-            assertEquals(McDavid.getWeekFantasyPoints(), 0);
-            assertEquals(McDavid.getTotalFantasyPoints(), 0);
-        } catch (InvalidPositionException e) {
-            fail("No Exception should be thrown -- all parameters valid.");
-        }
+    public void testConstructor() {
+        assertEquals(McDavid.getPlayerName(), "Connor McDavid");
+        assertEquals(McDavid.getPlayerPosition(), Position.C);
+        assertEquals(McDavid.getWeekFantasyPoints(), 0);
+        assertEquals(McDavid.getTotalFantasyPoints(), 0);
+        assertEquals(McDavid.getTeam(), null);
     }
 
     @Test
-    public void testConstructorPlayerInvalidPositionNoExceptions() {
-        try {
-            Skater McGoalie = new Skater("Connor McDavid", Position.G, 41, 67);
-            fail("Invalid Position exception should be thrown.");
-        } catch (InvalidPositionException e) {
-            // Nothing required here
-        }
+    public void testSetTeam() {
+
     }
 }

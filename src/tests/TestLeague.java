@@ -85,13 +85,13 @@
 //
 ////    @Test
 ////    public void testGetTeamsEmpty() {
-////        assertEmpty(baseLeague.getTeams(), empty);
+////        assertEmpty(baseLeague.getTeamMap(), empty);
 ////    }
 //
 ////    @Test
 ////    public void testGetTeamsSeveral() {
-////        assertTrue(league.getTeams().contains(baseRoster));
-////        assertTrue(league.getTeams().contains(roster));
+////        assertTrue(league.getTeamMap().contains(baseRoster));
+////        assertTrue(league.getTeamMap().contains(roster));
 ////    }
 //
 //

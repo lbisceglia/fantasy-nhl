@@ -21,7 +21,7 @@
 //    SkaterList availableSkaters = new Team("Available Skaters");
 //    GoalieList availableGoalies = new Team("Available Goalies");
 //    League league = new League(availableSkaters, availableGoalies);
-//    ArrayList<Team> participants = league.getTeams();
+//    ArrayList<Team> participants = league.getTeamMap();
 //
 //    //Modeled after Object Stream tutorial, 2018-10-01 [https://www.mkyong.com/java/how-to-read-and-write-java-object-to-a-file/]
 //    // TODO: add specification and tests for this method
