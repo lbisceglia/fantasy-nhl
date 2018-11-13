@@ -1,8 +1,10 @@
-package model.utilities;
+package model.Stat;
 
 import model.exceptions.InvalidStatException;
 
-public class StatManager {
+import java.io.Serializable;
+
+public class StatValidator implements Serializable {
 
     public static boolean isNaturalNumberStat(String statType, int statValue) throws InvalidStatException {
         if(statValue >= 0) {

@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class LeagueFormatter {
 
-    // EFFECTS: Returns a list of team names in this league
+    // EFFECTS: Returns a list of team1 names in this league
     public static ArrayList<String> getTeamNames(Set<Team> teams) {
         ArrayList<String> teamNames = new ArrayList<>();
 

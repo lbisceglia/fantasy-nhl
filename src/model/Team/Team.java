@@ -1,24 +1,32 @@
 package model.Team;
 
+import model.FantasyWeekManager;
 import model.League.League;
+import model.Observers.Observer;
 import model.Player.Player;
+import model.Stat.GameStat;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Set;
 
-public class Team implements Serializable {
+import static java.lang.StrictMath.round;
+
+public class Team implements Serializable, Observer {
     private String teamName;
     private int fantasyPoints;
-    private Set<Player> players;
-    private League league;
+    private ArrayList<Player> players;
+    //    private PlayerManager playerManager;
+    private FantasyWeekManager fantasyWeekManager;
+    private final League league;
 
-    // EFFECTS: Constructs an empty team with the given name and base stats
+    // EFFECTS: Constructs an empty team with the given name and base statManager
     public Team(String teamName) {
         this.teamName = teamName;
         fantasyPoints = 0;
-        players = new HashSet<>();
+        players = new ArrayList<>();
+//        playerManager = new PlayerManager(this);
+        fantasyWeekManager = new FantasyWeekManager();
         league = null;
     }
 
@@ -32,16 +40,17 @@ public class Team implements Serializable {
         return fantasyPoints;
     }
 
-    // EFFECTS: Return the list of players on the team
-    public Set<Player> getPlayers() {
+    // EFFECTS: Return the list of playerManager on the team
+    public ArrayList<Player> getPlayers() {
         return players;
     }
 
-    public League getLeague() {
-        return league;
-    }
+//    // EFFECTS: returns the leage the team is in
+//    public League getLeague() {
+//        return league;
+//    }
 
-    // EFFECTS: Sets the team's name to the given string non-empty
+    // EFFECTS: Sets the team's name to the given non-empty string
     //          Does nothing if the string is empty
     public void setTeamName(String teamName) {
         if (!teamName.equals("")) {
@@ -49,36 +58,33 @@ public class Team implements Serializable {
         }
     }
 
-    // EFFECTS: adds a player to players and adds this team to the player's team
+    // EFFECTS: adds a player to the team and subcribes to that player for updates
     public void addPlayer(Player player) {
-        if (!containsPlayer(player)) {
+        if (!players.contains(player)) {
             players.add(player);
-            player.setTeam(this);
+            player.addObserver(this);
         }
     }
 
-    // EFFECTS: adds the player from players and removes this team from the player's team
+    // EFFECTS: adds the player from playerManager and removes this team from the player's team
     public void removePlayer(Player player) {
-        if (containsPlayer(player)) {
-            players.remove(player);
-            player.setTeam(null);
-        }
+        players.remove(player);
+        player.removeObserver(this);
     }
 
-    // EFFECTS: returns true if the player is on the roster
-    public boolean containsPlayer(Player player) {
-        return players.contains(player);
+    public void addStat(GameStat gameStat) {
+        fantasyWeekManager.addStat(gameStat);
     }
 
-    // EFFECTS: Sets the team's league to the given league
-    public void setLeague(League league) {
-        if (this.league == null || !this.league.equals(league)) {
-            this.league = league;
-            this.league.addTeam(this);
-        }
+    @Override
+    // EFFECTS: Calculates the stat's fantasy points and adds it to the team's fantasy week
+    public void update(GameStat gameStat) {
+        fantasyWeekManager.calculateFantasyPoints(gameStat);
+        addStat(gameStat);
+
+        double points = gameStat.getFantasyPoints();
+        System.out.println("Update: " + teamName + " has earned another " + round(points) + " fantasy points!");
     }
-
-
 
     @Override
     public boolean equals(Object o) {

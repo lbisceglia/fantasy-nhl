@@ -1,86 +1,95 @@
 package model.Player;
 
-import model.Team.Team;
+import model.Observers.Subject;
+import model.Stat.GameStat;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Objects;
 
-public abstract class Player implements Serializable {
-    protected String name;
-//    protected Position position;
-    protected int weekFantasyPoints;
-    protected int totalFantasyPoints;
-    protected Team team;
+public class Player extends Subject implements Serializable {
+    private int playerID;
+    private String name;
+    private Position position;
+//    private Observer team;
+    private ArrayList<GameStat> stats;
+//    private StatManager statManager;
 
-
-    // EFFECTS: Construct a player with the given name and position
-    //          Player is not assigned to a team and given base stats
-    public Player(String name) {
-        this.name = name;
-        // TODO: create method for calculating FantasyPoints
-        weekFantasyPoints = 0;
-        totalFantasyPoints = 0;
-        team = null;
+    public enum Position {
+        C, RW, LW, D, G
     }
 
-//    // EFFECTS: Construct a player with the given name and position
-//    public Player(String name, Position position) throws InvalidPositionException {
-//        this.name = name;
-    //TODO: Show TA this mess
-//        if (this instanceof Skater && position.equals(Position.G)) {
-//            throw new InvalidPositionException("A skater cannot be a goalie.");
-//        } else {
-//            this.position = position;
-//        }
-//        weekFantasyPoints = 0;
-//        totalFantasyPoints = 0;
+    // EFFECTS: Constructs a player with the given name and position
+    //          Player has no assigned team1 or stats
+    public Player(int playerID, String name, Position position) {
+        this.playerID = playerID;
+        this.name = name;
+        this.position = position;
 //        team = null;
-//    }
+        stats = new ArrayList<>();
+////        statManager = new StatManager(this);
+    }
+
+    // EFFECTS: Return the player's id number
+    public int getPlayerID() {
+        return playerID;
+    }
 
     // EFFECTS: Return the player's name
     public String getPlayerName() {
         return name;
     }
 
-//    // EFFECTS: Return the player's hockey position
-//    public Position getPlayerPosition() {
-//        return position;
+    // EFFECTS: Return the player's position
+    public Position getPosition() {
+        return position;
+    }
+
+        // EFFECTS: Return the player's stats
+    public ArrayList<GameStat> getStats() {
+        return stats;
+    }
+
+
+//    // EFFECTS: Sets the player's team to the given team
+//    //          Removes them from their old team if necessary
+//    public void setTeam(Team team) {
+//        if (this.team == null) {
+//            this.team = team;
+//            this.team.addPlayer(this);
+//        } else if (!this.team.equals(team)) {
+//            Team previousTeam = this.team;
+//            previousTeam.getPlayers().remove(this);
+//            this.team = team;
+//            if (!(team == null)) {
+//                this.team.addPlayer(this);
+//            }
+//        }
 //    }
 
-    // EFFECTS: Return the number of fantasy points the player earned this week
-    public int getWeekFantasyPoints() {
-        return weekFantasyPoints;
-    }
 
-    // EFFECTS: Return the number of fantasy points the player earned so far this season
-    public int getTotalFantasyPoints() {
-        return totalFantasyPoints;
-    }
-
-    // EFFECTS: Return the player's team
-    public Team getTeam() {
-        return team;
-    }
-
-    // EFFECTS: Sets the player's team to the given team
-    public void setTeam(Team team) {
-        if (this.team == null || !this.team.equals(team)) {
-            this.team = team;
-            this.team.addPlayer(this);
+    // Adds a Stat to the player's list
+    // Triggers an update to notify the player's observers of the stat
+    public void addStat(GameStat gameStat) {
+        if(!stats.contains(gameStat)) {
+            stats.add(gameStat);
+            notifyObservers(gameStat);
         }
     }
+
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Player player = (Player) o;
-        return Objects.equals(name, player.name);
+        return playerID == player.playerID &&
+                Objects.equals(name, player.name);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(name);
+        return Objects.hash(playerID, name);
     }
 }
