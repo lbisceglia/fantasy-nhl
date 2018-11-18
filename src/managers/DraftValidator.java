@@ -5,6 +5,7 @@ import exceptions.InvalidDraftChoiceException;
 import models.Player;
 import models.Team;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -12,7 +13,7 @@ import java.util.Set;
 import static java.lang.Integer.max;
 import static models.Team.*;
 
-public class DraftValidator {
+public class DraftValidator implements Serializable {
     private final List<Team> teams;
     private final Set<Player> playerPool;
 

@@ -4,14 +4,15 @@ import exceptions.ImpossibleDraftException;
 import exceptions.InvalidDraftChoiceException;
 import exceptions.InvalidFantasyWeekException;
 import exceptions.InvalidTeamException;
+import interfaces.Loadable;
+import interfaces.Saveable;
 import managers.DraftManager;
 import managers.FantasyManager;
 import models.League;
 import models.Player;
 import models.Team;
 
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,14 +20,15 @@ import java.util.Scanner;
 import java.util.Set;
 
 import static managers.FantasyManager.FANTASY_WEEKS;
-import static models.League.*;
-import static ui.formatters.LeagueFormatter.getTeamNames;
+import static models.League.MAX_PARTICIPANTS;
+import static models.League.MIN_PARTICIPANTS;
 import static ui.formatters.TeamFormatter.getPlayerNamesAndPositions;
 
 //import managers.LeagueManager;
 
-public class FantasyNHL implements Serializable {
-    private static final String COMMAND_CREATE_TEAM = "team";
+public class FantasyNHL implements Serializable, Saveable, Loadable {
+    private static final String COMMAND_CREATE_TEAM = "add";
+    private static final String COMMAND_REMOVE_TEAM = "delete";
     private static final String COMMAND_VIEW_TEAM_NAMES = "view";
     private static final String COMMAND_DRAFT = "draft";
     private static final String COMMAND_ADVANCE_WEEK = "advance";
@@ -41,19 +43,14 @@ public class FantasyNHL implements Serializable {
     public static final String OPTION_GO_BACK = " or type \"" + COMMAND_GO_BACK + "\" to return to the previous menu.";
 
     Scanner scanner = new Scanner(System.in);
-    //    LeagueManager leagueManager;
-    League league;
     FantasyManager fantasyManager;
 
     public FantasyNHL() {
 
         // Modeled after B04-LoggingCalculator starter file
+        System.out.println("Welcome to Fantasy NHL!" + "\n");
+        load();
         String operation;
-        System.out.println("Welcome to DreamTeam NHL!");
-        league = loadLeague();
-        fantasyManager = new FantasyManager(league);
-//        league.load();
-//        league league = loadLeague();
 
         while (true) {
             printMenu();
@@ -63,45 +60,27 @@ public class FantasyNHL implements Serializable {
             // User creates a team
             if (operation.equals(COMMAND_CREATE_TEAM) && teamCanBeAdded()) {
                 createUserGeneratedTeam();
-                // User views the teams in the league
+            } else if (operation.equals(COMMAND_REMOVE_TEAM) && teamCanBeRemoved()) {
+                deleteUserGeneratedTeam();
             } else if (operation.equals(COMMAND_VIEW_TEAM_NAMES) && atLeastOneTeam()) {
                 printTeamsAndPlayers();
             } else if (operation.equals(COMMAND_DRAFT) && leagueCanDraft()) {
                 selectDraftTypeAndDraftTeams();
             } else if (operation.equals(COMMAND_ADVANCE_WEEK) && leagueIsDrafted()) {
                 updateLeagueWithNewStats();
-//            } else if (operation.equals(COMMAND_ADD_PLAYER) && atLeastOneTeam()) {
-//                addSelectedPlayerToSelectedTeam();
-//            } else if (operation.equals(COMMAND_ADD_STAT)) {
-//                createUserGeneratedStat();
+            } else if (operation.equals(COMMAND_VIEW_OVERALL_LEADER) && leagueHasStarted()) {
+//                displayOverallLeaders();
+            } else if (operation.equals(COMMAND_VIEW_WEEK_LEADER) && leagueHasStarted()) {
+//                displayThisWeeksLeaders();
             } else if (operation.equals(COMMAND_QUIT)) {
                 System.out.println("Thanks for playing! See you next time.");
                 break;
             } else if (operation.equals(COMMAND_SAVE_AND_QUIT)) {
                 System.out.println("Saving data...");
-                league.save();
+                save();
+//                league.save();
                 System.out.println("Your data has been saved! See you next time.");
                 break;
-//            } else if (operation.equals(COMMAND_VIEW_OVERALL_LEADER)) {
-//                LocalDate startDate = LocalDate.of(2017, 11, 10);
-//                LocalDate endDate = startDate.plusDays(6);
-//
-//                List<Integer> gameIDs = getWeeklyGameIDs(startDate, endDate);
-//                Set<team> teams = league.getTeams();
-//                for (team t : teams) {
-//                    List<player> players = t.getPlayers();
-//                    for (player p : players) {
-//                        StatManager stats = p.getStatManager();
-//                        try {
-//                            stats.addGameStats(gameIDs);
-//                        } catch (IOException e) {
-//                            System.out.println("Issue updating game stats.");
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                    System.out.println(t.getTeamName() + ", Fantasy Points: " + t.getOverallFantasyPoints());
-//                }
-//            }
             }
             // User enters an invalid command
             else {
@@ -120,7 +99,7 @@ public class FantasyNHL implements Serializable {
                 fantasyManager.advanceFantasyWeekByOne();
 
                 int week = fantasyManager.getCurrentFantasyWeek();
-                LocalDate startDate = fantasyManager.getWeekCutoffs().get(week-1).plusDays(1);
+                LocalDate startDate = fantasyManager.getWeekCutoffs().get(week - 1).plusDays(1);
                 LocalDate endDate = fantasyManager.getWeekCutoffs().get(week);
 
                 List<String> gameIDs = fantasyManager.getGameIDs(startDate, endDate);
@@ -140,8 +119,7 @@ public class FantasyNHL implements Serializable {
 
     public void draftTeams() {
         try {
-            List<Team> draftList = new ArrayList<>();
-            draftList = fantasyManager.selectDraftOrder();
+            List<Team> draftList = fantasyManager.selectDraftOrder();
             announceDraftOrder(draftList);
 
             System.out.println("The draft is beginning!" + "\n");
@@ -160,7 +138,7 @@ public class FantasyNHL implements Serializable {
             }
             fantasyManager.setDrafted();
 
-            System.out.println("\n" + "That concludes the Fantasy Draft! Good luck to all players!" + "\n");
+            System.out.println("\n" + "That concludes the Fantasy Draft! Good luck to all players!");
 
         } catch (ImpossibleDraftException e) {
             System.out.println(e.getMsg());
@@ -189,13 +167,9 @@ public class FantasyNHL implements Serializable {
         }
     }
 
-//    public void autoDraftTeams() {
-//        System.out.println("Completing the autodraft...");
-//
-//    }
 
     public void announceDraftOrder(List<Team> draftList) {
-        int size = league.getTeams().size();
+        int size = fantasyManager.size();
         System.out.println("The random draft order is...");
         for (int i = 1; i <= size; i++) {
             Team t = draftList.get(i - 1);
@@ -203,72 +177,6 @@ public class FantasyNHL implements Serializable {
         }
     }
 
-//    private void createUserGeneratedStat() {
-//        List<Player> allPlayers = new ArrayList<>();
-//        for (Team t : league.getTeams()) {
-//            allPlayers.addAll(t.getPlayers());
-//        }
-//
-//        while (true) {
-//            System.out.println("Enter the number of the player you want to award a goal to," + OPTION_GO_BACK);
-//
-//            int i = 1;
-//            for (Player p : allPlayers) {
-//                String title = "[" + i + "] " + p.getPlayerName() + " (" + p.getPosition() + ")";
-//                System.out.println(title);
-//                i++;
-//            }
-//
-//            String playerNumber = scanner.nextLine();
-//
-//            if (playerNumber.equals(COMMAND_GO_BACK)) {
-//                break;
-//            } else {
-//                try {
-//                    int playerIndex = isInteger(playerNumber) - 1;
-//
-//                    if (playerIndex >= 0 && playerIndex < allPlayers.size()) {
-//                        LocalDate date = LocalDate.now();
-//                        Stat stat = new Stat(date, 2017020001, allPlayers.get(playerIndex), goals, 1);
-//                        break;
-//                    } else {
-//                        printIsInvalidOption(playerNumber);
-//                    }
-//                } catch (NumberFormatException numberFormatException) {
-//                    printIsInvalidOption(playerNumber);
-//                }
-//            }
-//        }
-//    }
-
-
-//    private void addSelectedPlayerToSelectedTeam() {
-//        while (true) {
-//            ArrayList<Team> teams = askUserToSelectTeamByIndex();
-//            String teamNumber = scanner.nextLine();
-//            Team team = null;
-//
-//            if (teamNumber.equals(COMMAND_GO_BACK)) {
-//                break;
-//            } else {
-//                try {
-//                    int teamIndex = isInteger(teamNumber) - 1;
-//
-//                    if (teamIndex >= 0 && teamIndex < teams.size()) {
-//                        team = teams.get(teamIndex);
-//                        String teamName = team.getTeamName();
-//                        selectPlayer(team, teamName);
-//                        break;
-//                    } else {
-//                        printIsInvalidOption(teamNumber);
-//                    }
-//
-//                } catch (NumberFormatException numberFormatException) {
-//                    printIsInvalidOption(teamNumber);
-//                }
-//            }
-//        }
-//    }
 
     private void selectPlayer(Team team) {
         String teamName = team.getTeamName();
@@ -298,15 +206,11 @@ public class FantasyNHL implements Serializable {
         }
     }
 
-    private void printIsInvalidOption(String invalidInput) {
-        System.out.println(invalidInput + " is not a valid option");
-    }
-
     private void addPlayerToFantasyTeam(Team team, String teamName, ArrayList<Player> players, int playerIndex) {
         Player player = players.get(playerIndex);
         String playerName = player.getPlayerName();
         team.addPlayer(player);
-        league.getAvailablePlayers().remove(player);
+        fantasyManager.getLeague().getAvailablePlayers().remove(player);
         System.out.println("Success! " + playerName + " was added to " + teamName + ".");
     }
 
@@ -321,7 +225,7 @@ public class FantasyNHL implements Serializable {
             } else {
                 try {
                     Team team = new Team(teamName);
-                    league.addTeam(team);
+                    fantasyManager.getLeague().addTeam(team);
                     System.out.println("Success! " + teamName + " was added to the fantasy league!");
                     break;
                 } catch (InvalidTeamException e) {
@@ -330,6 +234,34 @@ public class FantasyNHL implements Serializable {
             }
         }
     }
+
+    private void deleteUserGeneratedTeam() {
+        while (true) {
+            System.out.println("Enter the number of the team you want to remove" + OPTION_GO_BACK);
+            printActiveTeamNames();
+            String teamNumber = scanner.nextLine();
+
+            if (teamNumber.equals(COMMAND_GO_BACK)) {
+                break;
+            } else {
+                try {
+                    int teamIndex = isInteger(teamNumber) - 1;
+
+                    if (teamIndex >= 0 && teamIndex < fantasyManager.size()) {
+                        Team t = fantasyManager.getLeague().getTeams().get(teamIndex);
+                        fantasyManager.getLeague().removeTeam(t);
+                        System.out.println(t.getTeamName() + " was removed from the fantasy league.");
+                        break;
+                    } else {
+                        printIsInvalidOption(teamNumber);
+                    }
+                } catch (NumberFormatException numberFormatException) {
+                    printIsInvalidOption(teamNumber);
+                }
+            }
+        }
+    }
+
 
     private ArrayList<Player> askUserToSelectPlayerByIndex(String teamName) {
         System.out.println("Enter the number of the player you want to add to " + teamName + ".");
@@ -341,8 +273,7 @@ public class FantasyNHL implements Serializable {
         int i = 1;
         ArrayList<Player> players = new ArrayList<>();
 
-        Set<Player> availablePlayers = league.getAvailablePlayers();
-        ArrayList<String> availablePlayerNames = new ArrayList<>();
+        Set<Player> availablePlayers = fantasyManager.getLeague().getAvailablePlayers();
 
         for (Player p : availablePlayers) {
             String title = "[" + i + "] " + p.getPlayerName() + " (" + p.getPosition() + ")";
@@ -354,23 +285,15 @@ public class FantasyNHL implements Serializable {
     }
 
 
-//    private ArrayList<Team> askUserToSelectTeamByIndex() {
-//        System.out.println("Enter the number of the team you want to add the player to " + OPTION_GO_BACK);
-//        System.out.println("Here's the list of teams:");
-//        ArrayList<Team> teams = new ArrayList<>();
-//        int i = 1;
-//        for (Team t : league.getTeams()) {
-//            System.out.println("[" + i + "] - " + t.getTeamName());
-//            teams.add(t);
-//            i++;
-//        }
-//        return teams;
-//    }
-
     private void printActiveTeamNames() {
         if (atLeastOneTeam()) {
             System.out.println("Here's the list of teams in the league:");
-            System.out.println(getTeamNames(league.getTeams()));
+            int i = 1;
+            for (Team t : fantasyManager.getLeague().getTeams()) {
+                String title = "[" + i + "] - " + t.getTeamName();
+                System.out.println(title);
+                i++;
+            }
         } else {
             System.out.println("You're the first team in the league!");
         }
@@ -378,9 +301,9 @@ public class FantasyNHL implements Serializable {
 
     // EFFECTS: Prints the team name and roster for every team in the league
     public void printTeamsAndPlayers() {
-        for (Team t : league.getTeams()) {
+        for (Team t : fantasyManager.getLeague().getTeams()) {
             ArrayList<Player> players = new ArrayList<>();
-            System.out.println("team: " + t.getTeamName() + ", Roster: " +
+            System.out.println("Team: " + t.getTeamName() + ", Roster: " +
                     getPlayerNamesAndPositions(t.getPlayers()));
         }
     }
@@ -391,29 +314,29 @@ public class FantasyNHL implements Serializable {
             System.out.println("Fantasy Week " + fantasyManager.getCurrentFantasyWeek() + " of " + FANTASY_WEEKS);
         }
         if (moreTeamsNeeded()) {
-            System.out.println("*** Please create " + (MIN_PARTICIPANTS - league.getTeams().size()) + " more teams in order to play ***");
+            System.out.println("*** Please create " + (MIN_PARTICIPANTS - fantasyManager.size() + " more teams in order to play ***"));
         }
         if (leagueCanDraft()) {
-            System.out.println("[" + COMMAND_DRAFT + "]   - Draft");
+            System.out.println("[" + COMMAND_DRAFT + "] - Draft");
         }
         if (leagueIsDrafted()) {
             System.out.println("[" + COMMAND_ADVANCE_WEEK + "] - Advance to the Next Fantasy Week");
         }
         if (teamCanBeAdded()) {
-            System.out.println("[" + COMMAND_CREATE_TEAM + "]    - Create Fantasy team");
+            System.out.println("[" + COMMAND_CREATE_TEAM + "] - Create Fantasy team");
+        }
+        if (teamCanBeRemoved()) {
+            System.out.println("[" + COMMAND_REMOVE_TEAM + "] - Delete Fantasy team");
         }
         if (atLeastOneTeam()) {
-            System.out.println("[" + COMMAND_VIEW_TEAM_NAMES + "]    - View Fantasy Teams");
-//            if (leagueIsDrafted()) {
-//                System.out.println("[" + COMMAND_ADD_PLAYER + "]  - Add a player");
-//                System.out.println("[" + COMMAND_ADD_STAT + "]    - Add a goal");
-//            }
+            System.out.println("[" + COMMAND_VIEW_TEAM_NAMES + "] - View Fantasy Teams");
         }
-        // TODO 4: Create Leaderboard functionality
-//        System.out.println("To view this week's leaderboard, type \"" + COMMAND_VIEW_WEEK_LEADER + "\".");
-//        System.out.println("[" + COMMAND_VIEW_OVERALL_LEADER + "] - Leaderboard");
-        System.out.println("[" + COMMAND_QUIT + "]    - Quit");
-        System.out.println("[" + COMMAND_SAVE_AND_QUIT + "]    - Save & Quit");
+        if (leagueHasStarted()) {
+            System.out.println("[" + COMMAND_VIEW_OVERALL_LEADER + "] - Overall Leaderboard");
+            System.out.println("[" + COMMAND_VIEW_WEEK_LEADER + "] - This Week's Leaders");
+        }
+        System.out.println("[" + COMMAND_QUIT + "] - Quit");
+        System.out.println("[" + COMMAND_SAVE_AND_QUIT + "] - Save & Quit");
     }
 
 
@@ -422,17 +345,25 @@ public class FantasyNHL implements Serializable {
         return Integer.parseInt(answer);
     }
 
+    private void printIsInvalidOption(String invalidInput) {
+        System.out.println(invalidInput + " is not a valid option");
+    }
+
     // EFFECTS: Returns true if there is at least one team in the league
     private boolean atLeastOneTeam() {
-        return league.getTeams().size() > 0;
+        return fantasyManager.size() > 0;
     }
 
     private boolean teamCanBeAdded() {
-        return league.getTeams().size() < MAX_PARTICIPANTS;
+        return fantasyManager.size() < MAX_PARTICIPANTS;
+    }
+
+    private boolean teamCanBeRemoved() {
+        return (atLeastOneTeam() && !leagueIsDrafted());
     }
 
     private boolean leagueCanDraft() {
-        return (league.getTeams().size() >= MIN_PARTICIPANTS && !fantasyManager.isDrafted());
+        return (fantasyManager.size() >= MIN_PARTICIPANTS && !fantasyManager.isDrafted());
     }
 
     private boolean leagueIsDrafted() {
@@ -440,7 +371,68 @@ public class FantasyNHL implements Serializable {
     }
 
     private boolean moreTeamsNeeded() {
-        return (league.getTeams().size() < MIN_PARTICIPANTS && !fantasyManager.isDrafted());
+        return (fantasyManager.size() < MIN_PARTICIPANTS && !fantasyManager.isDrafted());
+    }
+
+    private boolean leagueHasStarted() {
+        return (fantasyManager.getCurrentFantasyWeek() >= 1);
+    }
+
+    @Override
+    //Modeled after Object Stream tutorial, 2018-10-01 [https://www.mkyong.com/java/how-to-read-and-write-java-object-to-a-file/]
+    // TODO: add specification and tests for this method
+    public void save() {
+        try {
+            FileOutputStream f = new FileOutputStream(new File("fantasyManager.txt"));
+            ObjectOutputStream o = new ObjectOutputStream(f);
+
+            // Write objects to file
+            o.writeObject(fantasyManager);
+
+            o.close();
+            f.close();
+
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Error initializing stream");
+        }
+    }
+
+    @Override
+    //Modeled after Object Stream tutorial, 2018-10-01 [https://www.mkyong.com/java/how-to-read-and-write-java-object-to-a-file/]
+    // TODO: add specification and tests for this method
+    public void load() {
+        try {
+            FileInputStream fi = new FileInputStream(new File("fantasyManager.txt"));
+            ObjectInputStream oi = new ObjectInputStream(fi);
+
+            FantasyManager restoredFantasyManager = (FantasyManager) oi.readObject();
+
+            oi.close();
+            fi.close();
+
+            this.fantasyManager = restoredFantasyManager;
+
+        } catch (FileNotFoundException e) {
+            System.out.println("No saved state found. Creating a new league...");
+
+            League league = new League();
+            this.fantasyManager = new FantasyManager(league);
+
+        } catch (IOException e) {
+            System.out.println("No saved state found." + "\n" + "Creating new league!");
+
+            League league = new League();
+            this.fantasyManager = new FantasyManager(league);
+
+        } catch (ClassNotFoundException e) {
+            System.out.println("Class not found.");
+
+            League league = new League();
+            this.fantasyManager = new FantasyManager(league);
+        }
     }
 
 }

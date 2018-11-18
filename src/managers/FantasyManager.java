@@ -20,7 +20,7 @@ import java.util.List;
 import static managers.DraftManager.DraftType.Regular;
 import static models.Stat.StatType.*;
 
-public class FantasyManager {
+public class FantasyManager implements Serializable {
     private static final String savePath = "C:/Users/Lorenzo Bisceglia/Google Drive/1 - School/1 - BCS/CPSC 210/Project/projectw1_team29/src";
     private static final double POINTS_PER_GOAL = 6;
     private static final double POINTS_PER_ASSIST = 4;
@@ -50,6 +50,10 @@ public class FantasyManager {
         return currentFantasyWeek;
     }
 
+    public League getLeague() {
+        return league;
+    }
+
     public List<LocalDate> getWeekCutoffs() {
         return weekCutoffs;
     }
@@ -64,6 +68,10 @@ public class FantasyManager {
 
     public void setDrafted() {
         drafted = true;
+    }
+
+    public int size() {
+        return league.getTeams().size();
     }
 
     // EFFECTS: Sets current fantasy week to the given week if it valid
@@ -113,18 +121,6 @@ public class FantasyManager {
         setCurrentFantasyWeek(nextWeek);
     }
 
-
-//    private void beginFantasyCompetition() throws ImpossibleDraftException {
-//        int size = league.getTeams().size();
-//        if (MIN_PARTICIPANTS <= size && size <= MAX_PARTICIPANTS) {
-//            try {
-//                draftManager.createDraftList();
-//                setCurrentFantasyWeek(1);
-//            } catch (InvalidFantasyWeekException e) {
-//                System.out.println("Unable to set the fantasy week to 1");
-//            }
-//        }
-//    }
 
     public List<Team> selectDraftOrder() throws ImpossibleDraftException {
         return draftManager.createDraftList();

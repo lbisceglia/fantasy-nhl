@@ -5,6 +5,7 @@ import exceptions.InvalidDraftChoiceException;
 import models.Player;
 import models.Team;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +15,7 @@ import static managers.DraftManager.DraftType.*;
 import static models.Team.MAX_ROSTER_SIZE;
 import static ui.formatters.TeamFormatter.convertPlayerSetToList;
 
-public class DraftManager {
+public class DraftManager implements Serializable {
     private final List<Team> teams;
     private final Set<Player> playerPool;
     private DraftType draftType;

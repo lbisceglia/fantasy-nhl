@@ -3,14 +3,8 @@ package tests;
 import models.League;
 import models.Player;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
-
-import static models.League.loadAvailablePlayers;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestLeague {
     private Set<Player> availablePlayers;
@@ -18,8 +12,7 @@ public class TestLeague {
 
     @BeforeEach
     public void setup() {
-        availablePlayers = loadAvailablePlayers();
-        league = new League(availablePlayers);
+        league = new League();
 //
 //        baseTeam = new team("Base team");
 //        roster = new team("Roster");
@@ -38,6 +31,7 @@ public class TestLeague {
 //
 //        baseLeague = new league(baseMap, players);
     }
+}
 
 
 
@@ -48,15 +42,6 @@ public class TestLeague {
 //            System.out.println("The team1 already exists in the league.");
 //        }
 
-    @Test
-    public void testGetWeeklyGameIDs() {
-        LocalDate startDate = LocalDate.of(2018,1,2);
-        LocalDate endDate = LocalDate.of(2018,1,9);
-        List<Integer> gameIDs = league.getWeeklyGameIDs(startDate, endDate);
-        assertEquals(gameIDs.size(), 57);
-    }
-
-    }
 //
 //    @Test
 //    public void testAddPlayerToLeagueNoExceptions() {
