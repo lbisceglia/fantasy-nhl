@@ -1,11 +1,11 @@
 package tests;
 
-import models.Player;
-import managers.StatManager;
-import org.junit.jupiter.api.BeforeEach;
+        import models.Player;
+        import managers.StatManager;
+        import org.junit.jupiter.api.BeforeEach;
 
-import java.util.ArrayList;
-import java.util.List;
+        import java.util.ArrayList;
+        import java.util.List;
 
 public class TestStatManager {
     private Player Ovechkin;
