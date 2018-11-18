@@ -22,9 +22,28 @@ A list of popular fantasy NHL Players and their corresponding PlayerIDs from NHL
 18. Claude Giroux         8473512
 19. Blake Wheeler         8471218
 20. Johnny Gaudreau       8476346
+21. John Carlson          8474590
+22. Victor Hedman         8475167
+23. Morgan Rielly         8476853
+24. Seth Jones            8477495
+25. PK Subban             8474056
+26. Dustin Byfuglien      8470834
+27. Torey Krug            8476792
+28. Erik Karlsson         8474578
+29. Kris Letang           8471724
+30. Roman Josi            8474600
+31. Drew Doughty          8474563
+32. Pekka Rinne           8471469
+33. Frederik Andersen     8475883
+34. Connor Hellebuyck     8476945
+35. Braden Holtby         8474651
+36. Marc-Andre Fleury     8470594
+37. John Gibson           8476434
+
 */
 
-[ 8478402,
+[
+  8478402,
   8471214,
   8477492,
   8471215,
@@ -43,4 +62,22 @@ A list of popular fantasy NHL Players and their corresponding PlayerIDs from NHL
   8479339,
   8473512,
   8471218,
-  8476346 ]
+  8476346,
+  8474590,
+  8475167,
+  8476853,
+  8477495,
+  8474056,
+  8470834,
+  8476792,
+  8474578,
+  8471724,
+  8474600,
+  8474563,
+  8471469,
+  8475883,
+  8476945,
+  8474651,
+  8470594,
+  8476434
+]

@@ -1,7 +1,8 @@
 package tests;
 
-import model.Player.Player;
-import model.Team.Team;
+import exceptions.InvalidTeamException;
+import models.Player;
+import models.Team;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,17 +21,21 @@ public class TestTeam {
 
     @BeforeEach
     public void setup() {
-        team1 = new Team("team1");
-        team2 = new Team("team2");
-        team1a = new Team("team1");
-        McDavid = new Player(8478402, "Connor McDavid", Player.Position.C);
-        Ovechkin = new Player(8471214, "Alex Ovechkin", Player.Position.LW);
+        try {
+            team1 = new Team("team1");
+            team2 = new Team("team2");
+            team1a = new Team("team1");
+            McDavid = new Player(8478402, "Connor McDavid", Player.Position.C);
+            Ovechkin = new Player(8471214, "Alex Ovechkin", Player.Position.LW);
+        } catch (InvalidTeamException e) {
+            System.out.println(e.getMsg());
+        }
     }
 
     @Test
     public void testConstructor() {
         assertEquals(team1.getTeamName(), "team1");
-        assertEquals(team1.getFantasyPoints(), 0);
+        assertEquals(team1.getOverallFantasyPoints(), 0);
 //        assertEquals(team1.getPlayerManager().getTeam(), team1);
         assertEquals(team1.getPlayers(), new HashSet<>());
 //        assertEquals(team1.getLeague(), null);
@@ -38,8 +43,8 @@ public class TestTeam {
 
     @Test
     public void testSetTeamNameValidString() {
-        team1.setTeamName("New Team Name");
-        assertEquals(team1.getTeamName(), "New Team Name");
+        team1.setTeamName("New team Name");
+        assertEquals(team1.getTeamName(), "New team Name");
     }
 
     @Test

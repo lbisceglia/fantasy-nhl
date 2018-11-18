@@ -1,7 +1,7 @@
 package tests;
 
-import model.Player.Player;
-import model.Stat.StatManager;
+import models.Player;
+import managers.StatManager;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package tests;
 
-import model.League.League;
-import model.Player.Player;
+import models.League;
+import models.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
-import static model.League.League.loadAvailablePlayers;
+import static models.League.loadAvailablePlayers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestLeague {
@@ -21,8 +21,8 @@ public class TestLeague {
         availablePlayers = loadAvailablePlayers();
         league = new League(availablePlayers);
 //
-//        baseTeam = new Team("Base Team");
-//        roster = new Team("Roster");
+//        baseTeam = new team("Base team");
+//        roster = new team("Roster");
 //
 //        basePlayers = new ArrayList<>();
 //
@@ -34,9 +34,9 @@ public class TestLeague {
 //        baseMap = new HashMap<>();
 //        baseMap.put(baseTeam, basePlayers);
 //
-//        league = new League(teamPlayerMap, basePlayers);
+//        league = new league(teamPlayerMap, basePlayers);
 //
-//        baseLeague = new League(baseMap, players);
+//        baseLeague = new league(baseMap, players);
     }
 
 

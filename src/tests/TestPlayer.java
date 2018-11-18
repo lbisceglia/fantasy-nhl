@@ -1,12 +1,10 @@
 package tests;
 
-import model.Player.Player;
-import model.Stat.StatManager;
-import model.Team.Team;
+import exceptions.InvalidTeamException;
+import models.Player;
+import models.Team;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,7 +15,7 @@ public class TestPlayer {
     protected Player McDavid3;
     protected Player McDavid4;
     protected Player McDavid5;
-    protected StatManager statManager;
+    //    protected StatManager statManager;
     protected Team team1;
     protected Team team2;
 
@@ -29,8 +27,12 @@ public class TestPlayer {
         McDavid4 = new Player(8478402, "Konnor MacDavid", Player.Position.C);
         McDavid5 = new Player(8478403, "Konnor MacDavid", Player.Position.C);
 //        statManager = McDavid.getStatManager();
-        team1 = new Team("team1");
-        team2 = new Team("team2");
+        try {
+            team1 = new Team("team1");
+            team2 = new Team("team2");
+        } catch (InvalidTeamException e) {
+            System.out.println(e.getMsg());
+        }
     }
 
     @Test
@@ -39,7 +41,7 @@ public class TestPlayer {
         assertEquals(McDavid.getPlayerName(), "Connor McDavid");
         assertEquals(McDavid.getPosition(), Player.Position.C);
 //        assertEquals(McDavid.getTeam(), null);
-        assertEquals(McDavid.getStats(), new HashSet<>());
+//        assertEquals(McDavid.getStats(), new HashSet<>());
 //        assertEquals(McDavid.getStatManager().getPlayer(), McDavid);
     }
 

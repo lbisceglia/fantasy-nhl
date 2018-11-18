@@ -1,11 +1,11 @@
 //package tests;
 //
-//import model.League.League;
-//import model.Loadable;
-//import model.Saveable;
-//import model.Team.GoalieList;
-//import model.Team.SkaterList;
-//import model.Team.Team;
+//import models.league.league;
+//import interfaces.Loadable;
+//import interfaces.Saveable;
+//import models.team.GoalieList;
+//import models.team.SkaterList;
+//import models.team.team;
 //import org.junit.jupiter.api.Test;
 //
 //import java.io.*;
@@ -16,12 +16,12 @@
 //
 //public class TestLoadSave implements Loadable, Saveable, Serializable {
 //
-//    Team team1 = new Team("Lorenzo's Team");
-//    Team team2 = new Team("Donato's Team");
-//    SkaterList availableSkaters = new Team("Available Skaters");
-//    GoalieList availableGoalies = new Team("Available Goalies");
-//    League league = new League(availableSkaters, availableGoalies);
-//    ArrayList<Team> participants = league.getTeamMap();
+//    team team1 = new team("Lorenzo's team");
+//    team team2 = new team("Donato's team");
+//    SkaterList availableSkaters = new team("Available Skaters");
+//    GoalieList availableGoalies = new team("Available Goalies");
+//    league league = new league(availableSkaters, availableGoalies);
+//    ArrayList<team> participants = league.getTeamMap();
 //
 //    //Modeled after Object Stream tutorial, 2018-10-01 [https://www.mkyong.com/java/how-to-read-and-write-java-object-to-a-file/]
 //    // TODO: add specification and tests for this method
@@ -56,7 +56,7 @@
 //            ObjectInputStream oi = new ObjectInputStream(fi);
 //
 //            // Read objects
-//            ArrayList<Team> participants1 = (ArrayList<Team>) oi.readObject();
+//            ArrayList<team> participants1 = (ArrayList<team>) oi.readObject();
 //            SkaterList availableSkaters1 = (SkaterList) oi.readObject();
 //            GoalieList availableGoalies1 = (GoalieList) oi.readObject();
 //
@@ -72,7 +72,7 @@
 //        } catch (IOException e) {
 //            System.out.println("Error initializing stream");
 //        } catch (ClassNotFoundException e) {
-//            // TODO Auto-generated catch block
+//            // TODO AutoDraft-generated catch block
 //            e.printStackTrace();
 //        }
 //    }
