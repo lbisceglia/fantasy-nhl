@@ -1,4 +1,4 @@
-package ui.formatters;
+package managers;
 
 import exceptions.InvalidStatException;
 

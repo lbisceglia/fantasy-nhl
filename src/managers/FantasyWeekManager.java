@@ -24,7 +24,7 @@ public class FantasyWeekManager implements Serializable {
 
     // MODIFIES: this
     // EFFECTS: Adds a stat to the week in which it occurred
-    public void addStat(Stat stat) {
+    public void addStat(Team team, Stat stat) {
         int week = stat.getFantasyWeek();
 
         if (1 <= week && week <= FANTASY_WEEKS) {
@@ -47,21 +47,4 @@ public class FantasyWeekManager implements Serializable {
         }
         return fantasyPoints;
     }
-
-
-    // EFFECTS: Sends user an update notification
-    public void updateUser(Team team, Stat stat) {
-        double points = stat.getFantasyPoints();
-        System.out.println("Update: " + team.getTeamName() + " has earned another " + Math.round(points) + " fantasy points!");
-    }
-
-//    // EFFECTS: Returns the total FantasyPoints earned to date
-//    public double getOverallFantasyPoints() {
-//        int fantasyPoints = 0;
-//        for (int i = 1; i <= FANTASY_WEEKS; i++) {
-//            getWeeksFantasyPoints(i);
-//        }
-//        return fantasyPoints;
-//    }
-
 }

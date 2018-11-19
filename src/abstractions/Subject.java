@@ -3,10 +3,11 @@ package abstractions;
 import interfaces.Observer;
 import models.Stat;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Subject {
+public abstract class Subject implements Serializable {
     protected List<Observer> observers = new ArrayList<>();
 
     // EFFECTS: Returns the list of observers

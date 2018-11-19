@@ -6,7 +6,6 @@ import java.util.Objects;
 import static managers.FantasyManager.calculateFantasyPoints;
 
 public class Stat implements Serializable {
-//    private final LocalDate date;
     private final int gameID;
     private final Player player;
     private final StatType statType;
@@ -23,31 +22,21 @@ public class Stat implements Serializable {
     //          Calculates the points and fantasy week in which it was earned
     //          Adds itself to the player's stats
     public Stat(int gameID, int fantasyWeek, Player player, StatType statType, double amount) {
-//        this.date = date;
         this.gameID = gameID;
         this.player = player;
         this.statType = statType;
         this.amount = amount;
         this.fantasyPoints = 0;
-        // TODO: Get it to calculate the fantasy week in which it occurred
         this.fantasyWeek = fantasyWeek;
         calculateFantasyPoints(this);
-
         this.player.addStat(this);
     }
-
-
-//    // EFFECTS: Returns the date and time of the stat
-//    public LocalDate getDate() {
-//        return date;
-//    }
 
 
     // EFFECTS: Returns the NHL.com gameID primary key during which the stat took place
     public int getGameID() {
         return gameID;
     }
-
 
     // EFFECTS: Returns the player performing the stat
     public Player getPlayer() {
@@ -84,11 +73,6 @@ public class Stat implements Serializable {
         this.fantasyPoints = points;
     }
 
-    // MODIFIES: this
-    // EFFECTS: Sets the fantasy points earned for the stat
-    public void setFantasyWeek(int fantasyWeek) {
-        this.fantasyWeek = fantasyWeek;
-    }
 
     @Override
     public boolean equals(Object o) {

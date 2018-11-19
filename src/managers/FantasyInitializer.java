@@ -1,4 +1,6 @@
 package managers;
 
-public class FantasyInitializer {
+import java.io.Serializable;
+
+public class FantasyInitializer implements Serializable {
 }

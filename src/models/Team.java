@@ -56,6 +56,10 @@ public class Team implements Serializable, Observer {
         return players;
     }
 
+    public FantasyWeekManager getFantasyWeekManager() {
+        return fantasyWeekManager;
+    }
+
     // MODIFIES: this
     // EFFECTS: Sets the team's name
     //          Does nothing if the string is empty
@@ -69,6 +73,10 @@ public class Team implements Serializable, Observer {
     // EFFECTS: sets the current week's fantasy points
     public void setCurrentWeekFantasyPoints(double points) {
         this.currentWeekFantasyPoints = points;
+    }
+
+    public void setOverallFantasyPoints(double points) {
+        this.overallFantasyPoints = points;
     }
 
     // MODIFIES: this, player
@@ -95,10 +103,9 @@ public class Team implements Serializable, Observer {
     public void update(Stat stat) {
         double points = stat.getFantasyPoints();
 
-        fantasyWeekManager.addStat(stat);
+        fantasyWeekManager.addStat(this, stat);
         currentWeekFantasyPoints += points;
         overallFantasyPoints += points;
-        fantasyWeekManager.updateUser(this,stat);
     }
 
     @Override
@@ -114,4 +121,7 @@ public class Team implements Serializable, Observer {
 
         return Objects.hash(teamName);
     }
+
+
+
 }

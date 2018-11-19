@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class LeagueInitializer extends FileParser {
+public class LeagueInitializer extends FileParser implements Serializable {
     private WebPageParser webPageParser;
 
     public LeagueInitializer(League league) {

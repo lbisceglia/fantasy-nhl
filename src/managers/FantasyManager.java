@@ -13,6 +13,7 @@ import models.Team;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,7 @@ public class FantasyManager implements Serializable {
 
 
     //EFFECTS: Returns the current fantasy week
-    public int getCurrentFantasyWeek() {
+    public int currentWeek() {
         return currentFantasyWeek;
     }
 
@@ -92,6 +93,16 @@ public class FantasyManager implements Serializable {
         }
     }
 
+    public void checkFantasyWeekHasFullyElapsed(int week) throws InvalidFantasyWeekException {
+        int nextWeek = week++;
+        checkFantasyWeekInRange(nextWeek);
+        LocalDate endDate = getWeekCutoffs().get(nextWeek);
+        LocalDate today = LocalDate.now();
+        if (!today.isAfter(endDate)) {
+            throw new InvalidFantasyWeekException();
+        }
+    }
+
     private void checkScheduleNotMovingBackwards(int week) throws InvalidFantasyWeekException {
         if (week < currentFantasyWeek) {
             throw new InvalidFantasyWeekException();
@@ -113,6 +124,15 @@ public class FantasyManager implements Serializable {
             fantasyPoints += amount * POINTS_PER_WIN;
         }
         stat.setFantasyPoints(fantasyPoints);
+    }
+
+    public void updatePlayersOnWeek() {
+        System.out.println("\n" + "The results for week " + currentFantasyWeek + " are in!" + "\n");
+        for (Team t : getLeague().getTeams()) {
+            double points = t.getCurrentWeekFantasyPoints();
+            String pts = new DecimalFormat("#.##").format(points);
+            System.out.println("Update: " + t.getTeamName() + " has earned " + pts + " fantasy points this week!");
+        }
     }
 
     // EFFECTS: advances the fantasy week by one week if not in the final week
@@ -323,10 +343,10 @@ public class FantasyManager implements Serializable {
         JsonObject goalieStats = object.get("goalieStats").getAsJsonObject();
         int saveCount = goalieStats.get("saves").getAsInt();
         if (saveCount > 0) {
-            new Stat(gameID, getCurrentFantasyWeek(), player, saves, saveCount);
+            new Stat(gameID, currentWeek(), player, saves, saveCount);
         }
         if (goalieStats.get("decision").getAsString().equals("W")) {
-            new Stat(gameID, getCurrentFantasyWeek(), player, wins, 1);
+            new Stat(gameID, currentWeek(), player, wins, 1);
         }
     }
 
@@ -335,10 +355,10 @@ public class FantasyManager implements Serializable {
         int goalCount = skaterStats.get("goals").getAsInt();
         int assistCount = skaterStats.get("assists").getAsInt();
         if (goalCount > 0) {
-            new Stat(gameID, getCurrentFantasyWeek(), player, goals, goalCount);
+            new Stat(gameID, currentWeek(), player, goals, goalCount);
         }
         if (assistCount > 0) {
-            new Stat(gameID, getCurrentFantasyWeek(), player, assists, assistCount);
+            new Stat(gameID, currentWeek(), player, assists, assistCount);
         }
     }
 }
