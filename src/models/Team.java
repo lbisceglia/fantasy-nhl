@@ -95,6 +95,17 @@ public class Team implements Serializable, Observer {
         player.removeObserver(this);
     }
 
+    public void updateCurrentWeekFantasyPoints(int week) {
+        double points = fantasyWeekManager.getWeeksFantasyPoints(week);
+        setCurrentWeekFantasyPoints(points);
+    }
+
+    public void updateOverallFantasyPoints(int week) {
+        double currentPoints = getOverallFantasyPoints();
+        double newPoints = fantasyWeekManager.getWeeksFantasyPoints(week);
+        setOverallFantasyPoints(currentPoints + newPoints);
+    }
+
 
     @Override
     // MODIFIES: this
@@ -104,8 +115,8 @@ public class Team implements Serializable, Observer {
         double points = stat.getFantasyPoints();
 
         fantasyWeekManager.addStat(this, stat);
-        currentWeekFantasyPoints += points;
-        overallFantasyPoints += points;
+//        overallFantasyPoints += points;
+//        currentWeekFantasyPoints += points;
     }
 
     @Override

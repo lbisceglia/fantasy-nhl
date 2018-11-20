@@ -2,7 +2,6 @@ package managers;
 
 
 import abstractions.FileParser;
-import abstractions.WebPageParser;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,10 +19,9 @@ import java.util.List;
 import java.util.Set;
 
 public class LeagueInitializer extends FileParser implements Serializable {
-    private WebPageParser webPageParser;
 
     public LeagueInitializer(League league) {
-        webPageParser = new WebPageParser();
+        super();
         loadAvailablePlayers(league);
     }
 

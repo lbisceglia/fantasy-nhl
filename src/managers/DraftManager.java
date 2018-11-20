@@ -5,6 +5,7 @@ import exceptions.InvalidDraftChoiceException;
 import models.Player;
 import models.Team;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -118,7 +119,7 @@ public class DraftManager implements Serializable {
 
 
 
-    public void autoDraft(List<Team> draftList) {
+    public void autoDraft(List<Team> draftList, FantasyManager fantasyManager) {
         ArrayList<Player> players = convertPlayerSetToList(playerPool);
         randomizePlayerOrder(players);
 
@@ -129,9 +130,12 @@ public class DraftManager implements Serializable {
                     t.addPlayer(p);
                     players.remove(p);
                     playerPool.remove(p);
+                    fantasyManager.addPlayerStats(p, t);
                     System.out.println("Success! " + p.getPlayerName() + " was added to " + t.getTeamName() + ".");
                     break;
                 } catch (InvalidDraftChoiceException e) {
+
+                } catch (IOException e) {
 
                 }
             }

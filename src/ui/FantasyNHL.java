@@ -31,9 +31,6 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
     private static final String COMMAND_VIEW_TEAM_NAMES = "view";
     private static final String COMMAND_DRAFT = "draft";
     private static final String COMMAND_ADVANCE_WEEK = "advance";
-    //    private static final String COMMAND_ADD_PLAYER = "player";
-//    private static final String COMMAND_ADD_STAT = "goal";
-    // TODO 4: Create leaderboard functionality
     private static final String COMMAND_VIEW_WEEK_LEADER = "week";
     private static final String COMMAND_VIEW_OVERALL_LEADER = "overall";
     private static final String COMMAND_GO_BACK = "back";
@@ -66,7 +63,7 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
             } else if (operation.equals(COMMAND_DRAFT) && leagueCanDraft()) {
                 selectDraftTypeAndDraftTeams();
             } else if (operation.equals(COMMAND_ADVANCE_WEEK) && leagueIsDrafted() && leagueCanAdvance()) {
-                updateLeagueWithNewStats();
+                updateLeague();
             } else if (operation.equals(COMMAND_VIEW_OVERALL_LEADER) && leagueHasStarted()) {
                 displayOverallLeaders();
             } else if (operation.equals(COMMAND_VIEW_WEEK_LEADER) && leagueHasStarted()) {
@@ -80,7 +77,6 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
                 System.out.println("Your data has been saved! See you next time.");
                 break;
             }
-            // User enters an invalid command
             else {
                 System.out.println("Sorry, command not recognized!");
             }
@@ -135,31 +131,21 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
         }
     }
 
-    private void updateLeagueWithNewStats() {
+    private void updateLeague() {
         if (fantasyManager.currentWeek() < FANTASY_WEEKS) {
             try {
 
+                fantasyManager.advanceFantasyWeekByOne();
+
                 for(Team t : fantasyManager.getLeague().getTeams()) {
-                    t.setCurrentWeekFantasyPoints(0);
+                    t.updateCurrentWeekFantasyPoints(fantasyManager.currentWeek());
+                    t.updateOverallFantasyPoints(fantasyManager.currentWeek());
                 }
-
-                int week = fantasyManager.currentWeek();
-                LocalDate startDate = fantasyManager.getWeekCutoffs().get(week - 1).plusDays(1);
-                LocalDate endDate = fantasyManager.getWeekCutoffs().get(week);
-
-                List<String> gameIDs = fantasyManager.getGameIDs(startDate, endDate);
-                System.out.println("Updating this week's stats. This may take some time...");
-                fantasyManager.addGameStats(gameIDs);
 
                 fantasyManager.updatePlayersOnWeek();
 
-                fantasyManager.advanceFantasyWeekByOne();
-
             } catch (InvalidFantasyWeekException e) {
-                e.printStackTrace();
-            } catch (IOException ioe) {
-                System.out.println("Unable to upload this week's stats.");
-                ioe.printStackTrace();
+                System.out.println("You cannot advance to that fantasy week.");
             }
         }
     }
@@ -172,7 +158,7 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
             System.out.println("The draft is beginning!" + "\n");
 
             if (fantasyManager.getDraftManager().getDraftType().equals(DraftManager.DraftType.AutoDraft)) {
-                fantasyManager.getDraftManager().autoDraft(draftList);
+                fantasyManager.getDraftManager().autoDraft(draftList, fantasyManager);
             } else {
 
                 int i = 1;
@@ -184,12 +170,7 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
                 }
             }
             fantasyManager.setDrafted();
-
-            try {
-                fantasyManager.advanceFantasyWeekByOne();
-            } catch (InvalidFantasyWeekException e) {
-
-            }
+            updateLeague();
 
             System.out.println("\n" + "That concludes the Fantasy Draft! Good luck to all players!");
 
@@ -219,7 +200,6 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
             }
         }
     }
-
 
     private void announceDraftOrder(List<Team> draftList) {
         int size = fantasyManager.size();

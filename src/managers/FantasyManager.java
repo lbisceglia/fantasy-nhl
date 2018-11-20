@@ -28,6 +28,7 @@ public class FantasyManager implements Serializable {
     private static final double POINTS_PER_SAVE = 0.6;
     private static final double POINTS_PER_WIN = 5;
     public static final int FANTASY_WEEKS = 24;
+    public static final String CURRENT_SEASON = "20182019";
 
     private static final List<LocalDate> weekCutoffs = initializeWeekCutoffs();
     private boolean drafted;
@@ -149,7 +150,7 @@ public class FantasyManager implements Serializable {
 
     //TODO: get initializeWeekCutoffs to parse LocalDates more directly
     public static List<LocalDate> initializeWeekCutoffs() {
-        try (Reader reader = new FileReader(savePath + "/fantasyWeekCutoffs.json")) {
+        try (Reader reader = new java.io.FileReader(savePath + "/fantasyWeekCutoffs.json")) {
             JsonReader jsonReader = new JsonReader(reader);
             Gson gson = new GsonBuilder()
                     .setDateFormat("yyyy-MM-dd")
@@ -181,21 +182,20 @@ public class FantasyManager implements Serializable {
         return null;
     }
 
-    public List<String> getGameIDs(LocalDate startDate, LocalDate endDate) throws IOException {
+
+    public void addPlayerStats(Player p, Team t) throws IOException {
         BufferedReader br = null;
 
-        ArrayList<String> gameIDs = new ArrayList<>();
+        final String baseURL1 = "https://statsapi.web.nhl.com/api/v1/people/";
+        final String baseURL2 = "/?hydrate=stats(splits=gameLog)&season=";
 
         try {
-            final String baseURL1 = "https://statsapi.web.nhl.com/api/v1/schedule";
-            final String dateRange = "?startDate=" + startDate.toString() + "&endDate=" + endDate.toString();
-            String theURL = baseURL1 + dateRange;
+            String pID = Integer.toString(p.getPlayerID());
 
+            String theURL = baseURL1 + pID + baseURL2 + CURRENT_SEASON;
             URL url = new URL(theURL);
             br = new BufferedReader(new InputStreamReader(url.openStream()));
-
             String line;
-
             StringBuilder sb = new StringBuilder();
 
             while ((line = br.readLine()) != null) {
@@ -205,160 +205,71 @@ public class FantasyManager implements Serializable {
             }
 
             final String json = sb.toString();
-
             JsonParser jp = new JsonParser();
-            JsonElement je = jp.parse(json);
-            JsonObject jo = je.getAsJsonObject();
+            JsonObject jo = jp.parse(json).getAsJsonObject();
 
-            JsonArray dates = jo.get("dates").getAsJsonArray();
+            JsonObject people = jo.get("people").getAsJsonArray().get(0).getAsJsonObject();
+            JsonArray stats = people.get("stats").getAsJsonArray();
+            JsonArray games = stats.get(0).getAsJsonObject().get("splits").getAsJsonArray();
 
-            for (int i = 0; i < dates.size(); i++) {
-                JsonObject date = dates.get(i).getAsJsonObject();
-                JsonArray games = date.get("games").getAsJsonArray();
-
-                for (int j = 0; j < games.size(); j++) {
-                    JsonObject game = games.get(j).getAsJsonObject();
-                    String gamePk = game.get("gamePk").getAsString();
-                    gameIDs.add(gamePk);
-                }
-            }
-
-        } finally {
-            if (br != null) {
-                br.close();
-            }
-
-        }
-        return gameIDs;
-    }
-
-    public List<Player> getAllActivePlayers() {
-        List<Player> allPlayers = new ArrayList<>();
-        List<Team> teams = league.getTeams();
-        for (Team t : teams) {
-            allPlayers.addAll(t.getPlayers());
-        }
-        return allPlayers;
-    }
-
-    // REQUIRES: Requires a list of valid Game Primary Keys from NHL.com
-    // EFFECTS:
-    public void addGameStats(List<String> gameIDs) throws IOException {
-
-        BufferedReader br = null;
-
-        try {
-            for (String gameID : gameIDs) {
-
-                final String baseURL1 = "https://statsapi.web.nhl.com/api/v1/game/";
-                final String baseURL2 = "/boxscore";
-                String theURL = baseURL1 + gameID + baseURL2;
-
-                URL url = new URL(theURL);
-                br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-                String line;
-
-                StringBuilder sb = new StringBuilder();
-
-                while ((line = br.readLine()) != null) {
-
-                    sb.append(line);
-                    sb.append(System.lineSeparator());
-                }
-
-                final String json = sb.toString();
-
-                for (Player player : getAllActivePlayers()) {
-                    String playerID = Integer.toString(player.getPlayerID());
-
-                    if (json.toLowerCase().contains(playerID.toLowerCase())) {
-
-                        JsonParser jp = new JsonParser();
-                        JsonElement je = jp.parse(json);
-                        JsonObject jo = je.getAsJsonObject();
-                        JsonObject teams = jo.get("teams").getAsJsonObject();
-                        JsonObject awayTeam = teams.get("away").getAsJsonObject();
-                        JsonObject homeTeam = teams.get("home").getAsJsonObject();
-                        JsonObject awayPlayers = awayTeam.get("players").getAsJsonObject();
-                        JsonObject homePlayers = homeTeam.get("players").getAsJsonObject();
-
-                        JsonArray awaySkaters = awayTeam.get("skaters").getAsJsonArray();
-                        JsonArray awayGoalies = awayTeam.get("goalies").getAsJsonArray();
-                        JsonArray awayRoster = new JsonArray();
-                        awayRoster.addAll(awaySkaters);
-                        awayRoster.addAll(awayGoalies);
-
-                        JsonArray homeSkaters = homeTeam.get("skaters").getAsJsonArray();
-                        JsonArray homeGoalies = homeTeam.get("goalies").getAsJsonArray();
-                        JsonArray homeRoster = new JsonArray();
-                        homeRoster.addAll(homeSkaters);
-                        homeRoster.addAll(homeGoalies);
-
-                        for (int i = 0; i < awayRoster.size(); i++) {
-                            String pID = awayRoster.get(i).getAsString();
-
-                            if (pID.equals(playerID)) {
-                                JsonObject p = awayPlayers.get("ID" + playerID).getAsJsonObject();
-                                JsonObject stats = p.get("stats").getAsJsonObject();
-                                if (stats.has("goalieStats") || stats.has("skaterStats")) {
-                                    addStats(gameID, player, stats);
-                                    break;
-                                }
-                            }
-                        }
-
-                        for (int i = 0; i < homeRoster.size(); i++) {
-                            String pID = homeRoster.get(i).getAsString();
-
-                            if (pID.equals(playerID)) {
-                                JsonObject p = homePlayers.get("ID" + playerID).getAsJsonObject();
-                                JsonObject stats = p.get("stats").getAsJsonObject();
-                                if (stats.has("goalieStats") || stats.has("skaterStats")) {
-                                    addStats(gameID, player, stats);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+            for (int i = 0; i < games.size(); i++) {
+                JsonObject game = games.get(i).getAsJsonObject();
+                LocalDate date = LocalDate.parse(game.get("date").getAsString());
+                JsonObject stat = game.get("stat").getAsJsonObject();
+                String gameID = game.get("game").getAsJsonObject().get("gamePk").getAsString();
+                addStats(gameID, p, date, stat);
             }
         } finally {
             if (br != null) {
                 br.close();
             }
         }
+
     }
 
-    private void addStats(String gameID, Player player, JsonObject object) {
+
+    private void addStats(String gameID, Player player, LocalDate date, JsonObject object) {
         int gID = Integer.valueOf(gameID);
+        int week = calculateFantasyWeek(date);
         if (player.getPosition().equals(Player.Position.G)) {
-            addGoalieStats(gID, player, object);
+            addGoalieStats(gID, player, week, object);
         } else {
-            addSkaterStats(gID, player, object);
+            addSkaterStats(gID, player, week, object);
         }
     }
 
-    private void addGoalieStats(int gameID, Player player, JsonObject object) {
-        JsonObject goalieStats = object.get("goalieStats").getAsJsonObject();
-        int saveCount = goalieStats.get("saves").getAsInt();
+    private void addGoalieStats(int gameID, Player player, int week, JsonObject object) {
+        int saveCount = object.get("saves").getAsInt();
         if (saveCount > 0) {
-            new Stat(gameID, currentWeek(), player, saves, saveCount);
+            new Stat(gameID, week, player, saves, saveCount);
         }
-        if (goalieStats.get("decision").getAsString().equals("W")) {
-            new Stat(gameID, currentWeek(), player, wins, 1);
+        if (object.has("decision") && object.get("decision").getAsString().equals("W")) {
+            new Stat(gameID, week, player, wins, 1);
         }
     }
 
-    private void addSkaterStats(int gameID, Player player, JsonObject object) {
-        JsonObject skaterStats = object.get("skaterStats").getAsJsonObject();
-        int goalCount = skaterStats.get("goals").getAsInt();
-        int assistCount = skaterStats.get("assists").getAsInt();
+    private void addSkaterStats(int gameID, Player player, int week, JsonObject object) {
+//        JsonObject skaterStats = object.get("skaterStats").getAsJsonObject();
+//        int goalCount = skaterStats.get("goals").getAsInt();
+//        int assistCount = skaterStats.get("assists").getAsInt();
+        int goalCount = object.get("goals").getAsInt();
+        int assistCount = object.get("assists").getAsInt();
         if (goalCount > 0) {
-            new Stat(gameID, currentWeek(), player, goals, goalCount);
+            new Stat(gameID, week, player, goals, goalCount);
         }
         if (assistCount > 0) {
-            new Stat(gameID, currentWeek(), player, assists, assistCount);
+            new Stat(gameID, week, player, assists, assistCount);
         }
     }
+
+    private int calculateFantasyWeek(LocalDate date) {
+        int i = 0;
+        for (LocalDate d : weekCutoffs) {
+            if (date.isAfter(d)) {
+                i++;
+            }
+        }
+        return i;
+    }
 }
+
