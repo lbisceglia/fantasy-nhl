@@ -53,7 +53,6 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
             operation = scanner.nextLine();
             System.out.println("You selected " + operation + ".");
 
-            // User creates a team
             if (operation.equals(COMMAND_CREATE_TEAM) && teamCanBeAdded()) {
                 createUserGeneratedTeam();
             } else if (operation.equals(COMMAND_REMOVE_TEAM) && teamCanBeRemoved()) {
