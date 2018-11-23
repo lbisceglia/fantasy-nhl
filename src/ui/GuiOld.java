@@ -8,15 +8,14 @@ import models.Team;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 
+import static javax.swing.JFrame.EXIT_ON_CLOSE;
 import static models.League.MAX_PARTICIPANTS;
 
-public class PucksInDeep extends JFrame implements Loadable, ActionListener {
-    private static final String COMMAND_CREATE_TEAM = "add";
-    private static final String COMMAND_REMOVE_TEAM = "delete";
+public class GuiOld implements Loadable, Serializable {
+    private static final String COMMAND_CREATE_TEAM = "Create Team";
+    private static final String COMMAND_REMOVE_TEAM = "Delete Team";
     private static final String COMMAND_VIEW_TEAM_NAMES = "view";
     private static final String COMMAND_DRAFT = "draft";
     private static final String COMMAND_ADVANCE_WEEK = "advance";
@@ -28,62 +27,113 @@ public class PucksInDeep extends JFrame implements Loadable, ActionListener {
 
     private FantasyManager fantasyManager;
     private InputDialog dialogBox;
-    private JPanel p = new JPanel();
-    private JTextField t = new JTextField("Hey bud");
-    private JTextArea console = new JTextArea();
-    private JButton delete = new JButton("Delete");
-    private JButton view = new JButton("View");
-    private JButton quit = new JButton("Quit");
-    private JButton save = new JButton("Save");
+    private JPanel panelMain;
+    private JButton btnAdd;
+    private JButton btnRemove;
+    private JButton btnView;
+    private JComboBox comboBox1;
+    private JTabbedPane tabbedPane1;
 
-    public static void main(String[] args) {
-        new PucksInDeep();
+    public GuiOld() {
+        load();
+        btnAdd = new JButton(COMMAND_CREATE_TEAM);
+        btnAdd.addActionListener(event->{
+            createUserGeneratedTeam();
+        });
+
+        btnRemove = new JButton(COMMAND_REMOVE_TEAM);
+        btnRemove.addActionListener(event-> {
+
+
+    });
+
     }
 
-    public PucksInDeep() {
-        super("Pucks In Deep");
-        load();
-
-        // Modelled after: https://alvinalexander.com/java/jframe-size-example-screen
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Pucks In Deep");
+        frame.setContentPane(new GuiOld().panelMain);
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int height = screenSize.height * 1 / 2;
-        int width = screenSize.width * 1 / 2;
-        setSize(width, height);
-        setResizable(true);
-        setLocationRelativeTo(null);
-        setVisible(true);
+        int height = screenSize.height / 2;
+        int width = screenSize.width / 2;
+        frame.setSize(width, height);
+        frame.setResizable(true);
+        frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
 
-        dialogBox = new InputDialog();
+        new GuiOld();
 
 
-        JButton add = new JButton("Add");
-        add.setActionCommand(COMMAND_CREATE_TEAM);
-        add.addActionListener(this);
+//        GridLayout gl = new GridLayout();
+//        panelMain.setLayout(gl);
+//        add(panelMain);
+//
+//        gui.btnAdd = new JButton(COMMAND_CREATE_TEAM);
+//        gui.btnAdd.addActionListener(event->{
+//            gui.createUserGeneratedTeam();
+//        });
+//
+//        gui.btnRemove = new JButton(COMMAND_REMOVE_TEAM);
+//        gui.btnRemove.addActionListener(event-> {
+//
+//        });
 
-        p.add(add);
-        p.add(delete);
-        p.add(view);
-        p.add(quit);
-        p.add(save);
+//        btnView = new JButton(COMMAND_VIEW_TEAM_NAMES);
+//        btnView.addActionListener(event-> {
+//
+//        });
 
-        p.add(t);
-        p.add(console);
+//        gui.panelMain.add(gui.btnAdd);
+//        gui.panelMain.add(gui.btnRemove);
 
-        add(p);
+        frame.setVisible(true);
+    }
+
+//    @Override
+//    public void actionPerformed(ActionEvent e) {
+//        if (e.getActionCommand().equals(COMMAND_CREATE_TEAM) && teamCanBeAdded()) {
+//            createUserGeneratedTeam();
+////        } else if (e.getActionCommand().equals(COMMAND_REMOVE_TEAM) && teamCanBeRemoved()) {
+////            deleteUserGeneratedTeam();
+////        } else if (e.getActionCommand().equals(COMMAND_VIEW_TEAM_NAMES) && atLeastOneTeam()) {
+////            printTeamsAndPlayers();
+////        } else if (e.getActionCommand().equals(COMMAND_DRAFT) && leagueCanDraft()) {
+////            selectDraftTypeAndDraftTeams();
+////        } else if (e.getActionCommand().equals(COMMAND_ADVANCE_WEEK) && leagueIsDrafted() && leagueCanAdvance()) {
+////            updateLeague();
+////        } else if (e.getActionCommand().equals(COMMAND_VIEW_OVERALL_LEADER) && leagueHasStarted()) {
+////            displayOverallLeaders();
+////        } else if (e.getActionCommand().equals(COMMAND_VIEW_WEEK_LEADER) && leagueHasStarted()) {
+////            displayThisWeeksLeaders();
+//        } else if (e.getActionCommand().equals(COMMAND_QUIT)) {
+//            System.out.println("Thanks for playing! See you next time.");
+////            break;
+//        } else if (e.getActionCommand().equals(COMMAND_SAVE_AND_QUIT)) {
+//            System.out.println("Saving data...");
+////            save();
+//            System.out.println("Your data has been saved! See you next time.");
+////            break;
+//        } else {
+//            System.out.println("Sorry, command not recognized!");
+//        }
+//
+//    }
+
+    private boolean teamCanBeAdded() {
+        return fantasyManager.size() < MAX_PARTICIPANTS;
     }
 
     private void createUserGeneratedTeam() {
+        String errorMsg = "";
         while (true) {
             printActiveTeamNames();
             try {
-                String teamName = dialogBox.getUserInput("Enter a unique team name.");
+                String teamName = JOptionPane.showInputDialog(this,errorMsg + "Enter a unique team name.");
                 Team team = new Team(teamName);
                 fantasyManager.getLeague().addTeam(team);
                 System.out.println("Success! " + teamName + " was added to the fantasy league!");
                 break;
             } catch (InvalidTeamException e) {
-                System.out.println(e.getMsg());
+                errorMsg = e.getMsg() + "\n";
             } catch (NullPointerException e) {
                 break;
             }
@@ -106,9 +156,6 @@ public class PucksInDeep extends JFrame implements Loadable, ActionListener {
             }
         }
     }
-//
-//    private void printActiveTeamNames() {
-//        console.
 
     private void printActiveTeamNames() {
 //        if (atLeastOneTeam()) {
@@ -125,13 +172,6 @@ public class PucksInDeep extends JFrame implements Loadable, ActionListener {
 //        }
     }
 
-    private boolean atLeastOneTeam() {
-        return fantasyManager.size() > 0;
-    }
-
-    private boolean teamCanBeAdded() {
-        return fantasyManager.size() < MAX_PARTICIPANTS;
-    }
 
 
     @Override
@@ -167,40 +207,5 @@ public class PucksInDeep extends JFrame implements Loadable, ActionListener {
             League league = new League();
             this.fantasyManager = new FantasyManager(league);
         }
-    }
-
-    /**
-     * Invoked when an action occurs.
-     *
-     * @param e
-     */
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals(COMMAND_CREATE_TEAM) && teamCanBeAdded()) {
-            createUserGeneratedTeam();
-//        } else if (e.getActionCommand().equals(COMMAND_REMOVE_TEAM) && teamCanBeRemoved()) {
-//            deleteUserGeneratedTeam();
-//        } else if (e.getActionCommand().equals(COMMAND_VIEW_TEAM_NAMES) && atLeastOneTeam()) {
-//            printTeamsAndPlayers();
-//        } else if (e.getActionCommand().equals(COMMAND_DRAFT) && leagueCanDraft()) {
-//            selectDraftTypeAndDraftTeams();
-//        } else if (e.getActionCommand().equals(COMMAND_ADVANCE_WEEK) && leagueIsDrafted() && leagueCanAdvance()) {
-//            updateLeague();
-//        } else if (e.getActionCommand().equals(COMMAND_VIEW_OVERALL_LEADER) && leagueHasStarted()) {
-//            displayOverallLeaders();
-//        } else if (e.getActionCommand().equals(COMMAND_VIEW_WEEK_LEADER) && leagueHasStarted()) {
-//            displayThisWeeksLeaders();
-        } else if (e.getActionCommand().equals(COMMAND_QUIT)) {
-            System.out.println("Thanks for playing! See you next time.");
-//            break;
-        } else if (e.getActionCommand().equals(COMMAND_SAVE_AND_QUIT)) {
-            System.out.println("Saving data...");
-//            save();
-            System.out.println("Your data has been saved! See you next time.");
-//            break;
-        } else {
-            System.out.println("Sorry, command not recognized!");
-        }
-
     }
 }
