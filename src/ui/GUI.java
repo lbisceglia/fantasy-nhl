@@ -7,13 +7,11 @@ import interfaces.Saveable;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import managers.FantasyManager;
 import models.League;
 import models.Team;
@@ -39,6 +37,8 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private Scene deleteTeamMenu;
     private Scene Standings;
 
+    private ComboBox<Team> teamsCombo;
+
     private Button btnGetStarted;
     private Button btnAddTeam;
     private Button btnDeleteTeam;
@@ -49,6 +49,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private Button btnQuit;
     private Button btnBack;
     private Button btnSubmitAddTeam;
+    private Button btnSubmitDeleteTeam;
 
     public static void main(String[] args) {
         launch(args);
@@ -68,7 +69,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
         setupMainMenu();
         setupBackButton();
+        setupTeamComboBox();
         setupAddTeamMenu();
+        setupDeleteTeamMenu();
 
         updateButtonAccess();
         window.show();
@@ -78,9 +81,41 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnBack = new Button();
         btnBack.setText("Back");
         btnBack.setFont(btnFont);
-        btnBack.setOnAction(e-> {
+        btnBack.setOnAction(e -> {
             returnToMainMenu();
         });
+    }
+
+    public void setupTeamComboBox() {
+        teamsCombo = new ComboBox<>();
+        updateActiveTeamsCombo();
+        teamsCombo.setPromptText("Select the team to delete.");
+        teamsCombo.setConverter(new StringConverter<Team>() {
+            @Override
+            public String toString(Team object) {
+                return object.getTeamName();
+            }
+
+            @Override
+            public Team fromString(String string) {
+                return null;
+            }
+        });
+    }
+
+    private void setupDeleteTeamMenu() {
+        btnSubmitDeleteTeam = new Button();
+        btnSubmitDeleteTeam.setText("Delete Team");
+        btnSubmitDeleteTeam.setFont(btnFont);
+        btnSubmitDeleteTeam.setOnAction(e -> {
+            deleteUserGeneratedTeam();
+        });
+
+        VBox deleteTeamLayout = new VBox(10);
+        deleteTeamLayout.setAlignment(Pos.CENTER);
+        deleteTeamLayout.getChildren().addAll(teamsCombo, btnSubmitDeleteTeam, btnBack);
+
+        deleteTeamMenu = new Scene(deleteTeamLayout, WIDTH, HEIGHT);
     }
 
     private void setupAddTeamMenu() {
@@ -103,8 +138,8 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     }
 
     private void updateAddTeamInstructions() {
-        if(atLeastOneTeam()) {
-            instructions.setText("Please enter a unique team name." + "\n"+ printActiveTeamNames());
+        if (atLeastOneTeam()) {
+            instructions.setText("Please enter a unique team name." + "\n" + printActiveTeamNames());
         } else {
             instructions.setText("You're the first team in the league!" + "\n" +
                     "Please enter a unique team name.");
@@ -172,9 +207,32 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         }
     }
 
+    private void deleteUserGeneratedTeam() {
+        Team team = teamsCombo.getValue();
+
+        if (team == null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Invalid Team Error");
+            alert.setContentText("You must choose a team to delete.");
+            alert.showAndWait();
+        } else {
+            fantasyManager.getLeague().removeTeam(team);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Information Dialog");
+            alert.setContentText(team.getTeamName() + " was deleted from the fantasy league.");
+            alert.showAndWait();
+            returnToMainMenu();
+        }
+    }
+
+    private void updateActiveTeamsCombo() {
+        teamsCombo.getItems().clear();
+        teamsCombo.getItems().addAll(fantasyManager.getLeague().getTeams());
+    }
+
 
     private String printActiveTeamNames() {
-        String teams = "Here is the list of teams: ";
+        String teams = "Here is the list of teamsCombo: ";
         if (atLeastOneTeam()) {
             int i = 1;
             for (Team t : fantasyManager.getLeague().getTeams()) {
@@ -219,10 +277,10 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnDeleteTeam = new Button();
         btnDeleteTeam.setText("Delete Team");
         btnDeleteTeam.setFont(btnFont);
-        // TODO: change from true/false to dependent on those boolean fields
         btnDeleteTeam.setDisable(!teamCanBeRemoved());
         btnDeleteTeam.setOnAction(e -> {
-
+            updateActiveTeamsCombo();
+            window.setScene(deleteTeamMenu);
         });
 
         btnViewStandings = new Button();
