@@ -349,7 +349,7 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
             displayWeeksFantasyDates(fantasyManager.currentWeek());
         }
         if (moreTeamsNeeded()) {
-            System.out.println("*** Please create " + (MIN_PARTICIPANTS - fantasyManager.size() + " more teams in order to play ***"));
+            System.out.println("*** Please create " + (MIN_PARTICIPANTS - fantasyManager.size()) + " more teams in order to play ***");
         }
         if (leagueCanDraft()) {
             System.out.println("[" + COMMAND_DRAFT + "] - Draft");

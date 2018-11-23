@@ -17,19 +17,25 @@ import models.League;
 import models.Team;
 
 import java.io.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
+import static managers.FantasyManager.FANTASY_WEEKS;
 import static models.League.MAX_PARTICIPANTS;
 import static models.League.MIN_PARTICIPANTS;
 
 public class GUI extends Application implements Loadable, Saveable, Serializable {
     private final static int WIDTH = 500;
-    private final static int HEIGHT = 500;
+    private final static int HEIGHT = 650;
     private final static String FONT = "Helvetica";
     private final static Font btnFont = new Font(FONT, 16);
 
     private FantasyManager fantasyManager;
+    private Label weeksLabel = new Label();
     private Label instructions = new Label();
     private TextField inputTeam;
+
     private Stage window;
     private Scene startPage;
     private Scene mainMenu;
@@ -47,7 +53,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private Button btnAdvanceWeek;
     private Button btnSave;
     private Button btnQuit;
-    private Button btnBack;
+//    private Button btnBack;
+    private Button btnBackAddTeam;
+    private Button btnBackDeleteTeam;
     private Button btnSubmitAddTeam;
     private Button btnSubmitDeleteTeam;
 
@@ -68,7 +76,6 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         window.setScene(startPage);
 
         setupMainMenu();
-        setupBackButton();
         setupTeamComboBox();
         setupAddTeamMenu();
         setupDeleteTeamMenu();
@@ -77,11 +84,10 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         window.show();
     }
 
-    private void setupBackButton() {
-        btnBack = new Button();
-        btnBack.setText("Back");
-        btnBack.setFont(btnFont);
-        btnBack.setOnAction(e -> {
+    private void setupBackButton(Button btn) {
+        btn.setText("Back");
+        btn.setFont(btnFont);
+        btn.setOnAction(e -> {
             returnToMainMenu();
         });
     }
@@ -89,7 +95,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     public void setupTeamComboBox() {
         teamsCombo = new ComboBox<>();
         updateActiveTeamsCombo();
-        teamsCombo.setPromptText("Select the team to delete.");
+        teamsCombo.setPromptText("Select the team to delete");
         teamsCombo.setConverter(new StringConverter<Team>() {
             @Override
             public String toString(Team object) {
@@ -104,6 +110,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     }
 
     private void setupDeleteTeamMenu() {
+        btnBackDeleteTeam = new Button();
+        setupBackButton(btnBackDeleteTeam);
+
         btnSubmitDeleteTeam = new Button();
         btnSubmitDeleteTeam.setText("Delete Team");
         btnSubmitDeleteTeam.setFont(btnFont);
@@ -113,12 +122,15 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
         VBox deleteTeamLayout = new VBox(10);
         deleteTeamLayout.setAlignment(Pos.CENTER);
-        deleteTeamLayout.getChildren().addAll(teamsCombo, btnSubmitDeleteTeam, btnBack);
+        deleteTeamLayout.getChildren().addAll(teamsCombo, btnSubmitDeleteTeam, btnBackDeleteTeam);
 
         deleteTeamMenu = new Scene(deleteTeamLayout, WIDTH, HEIGHT);
     }
 
     private void setupAddTeamMenu() {
+        btnBackAddTeam = new Button();
+        setupBackButton(btnBackAddTeam);
+
         btnSubmitAddTeam = new Button();
         btnSubmitAddTeam.setText("Create Team");
         btnSubmitAddTeam.setFont(btnFont);
@@ -132,7 +144,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
         VBox addTeamLayout = new VBox(10);
         addTeamLayout.setAlignment(Pos.CENTER);
-        addTeamLayout.getChildren().addAll(instructions, inputTeam, btnSubmitAddTeam, btnBack);
+        addTeamLayout.getChildren().addAll(instructions, inputTeam, btnSubmitAddTeam, btnBackAddTeam);
 
         addTeamMenu = new Scene(addTeamLayout, WIDTH, HEIGHT);
     }
@@ -148,6 +160,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private void returnToMainMenu() {
         updateButtonAccess();
+        updateWeekLabel();
         window.setScene(mainMenu);
     }
 
@@ -164,6 +177,10 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private boolean teamCanBeAdded() {
         return fantasyManager.size() < MAX_PARTICIPANTS;
+    }
+
+    private boolean moreTeamsNeeded() {
+        return (fantasyManager.size() < MIN_PARTICIPANTS && !fantasyManager.isDrafted());
     }
 
     private boolean teamCanBeRemoved() {
@@ -232,11 +249,11 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
 
     private String printActiveTeamNames() {
-        String teams = "Here is the list of teamsCombo: ";
+        String teams = "Here is the list of teams: ";
         if (atLeastOneTeam()) {
             int i = 1;
             for (Team t : fantasyManager.getLeague().getTeams()) {
-                String title = "\n" + "[" + i + "] - " + t.getTeamName();
+                String title = "\n" + t.getTeamName();
                 teams += title;
                 i++;
             }
@@ -264,7 +281,40 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         startPage = new Scene(startLayout, WIDTH, HEIGHT);
     }
 
+    private void updateWeekLabel() {
+        String week = "Fantasy Week " + fantasyManager.currentWeek() + " of " + FANTASY_WEEKS;
+        String dates = "";
+        String requirement = "";
+        if (fantasyManager.currentWeek() > 0) {
+            dates = "\n" + getWeeksFantasyDates(fantasyManager.currentWeek());
+        }
+        if (moreTeamsNeeded()) {
+            requirement = "\n" + "*** Please create " + (MIN_PARTICIPANTS - fantasyManager.size()) + " more teams in order to play ***";
+        }
+        weeksLabel.setText(week + dates + requirement);
+        weeksLabel.setFont(new Font(FONT, 16));
+    }
+
+    private String getWeeksFantasyDates(int week) {
+        List<LocalDate> dates = fantasyManager.getWeekCutoffs();
+        LocalDate startDate = dates.get(week - 1).plusDays(1);
+        LocalDate endDate = dates.get(week);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMM yyyy");
+        String start = startDate.format(formatter);
+        String end = endDate.format(formatter);
+
+        String dateRange = "(" + start + " - " + end + ")";
+        return dateRange;
+    }
+
     private void setupMainMenu() {
+        updateWeekLabel();
+
+        Label mainLabel = new Label();
+        mainLabel.setText("Fantasy NHL");
+        mainLabel.setFont(new Font(FONT, 30));
+
         btnAddTeam = new Button();
         btnAddTeam.setText("Add Team");
         btnAddTeam.setFont(btnFont);
@@ -324,7 +374,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
         VBox mainMenuLayout = new VBox(10);
         mainMenuLayout.setAlignment(Pos.CENTER);
-        mainMenuLayout.getChildren().addAll(btnAddTeam, btnDeleteTeam, btnViewStandings, btnDraft, btnAdvanceWeek, btnSave, btnQuit);
+        mainMenuLayout.getChildren().addAll(mainLabel, weeksLabel, btnAddTeam, btnDeleteTeam, btnViewStandings, btnDraft, btnAdvanceWeek, btnSave, btnQuit);
 
         mainMenu = new Scene(mainMenuLayout, WIDTH, HEIGHT);
     }
