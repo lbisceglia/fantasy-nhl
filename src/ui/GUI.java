@@ -3,6 +3,7 @@ package ui;
 import exceptions.InvalidFantasyWeekException;
 import exceptions.InvalidTeamException;
 import interfaces.Loadable;
+import interfaces.Saveable;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -22,7 +23,7 @@ import java.io.*;
 import static models.League.MAX_PARTICIPANTS;
 import static models.League.MIN_PARTICIPANTS;
 
-public class GUI extends Application implements Loadable, Serializable {
+public class GUI extends Application implements Loadable, Saveable, Serializable {
     private final static int WIDTH = 500;
     private final static int HEIGHT = 500;
     private final static String FONT = "Helvetica";
@@ -69,89 +70,8 @@ public class GUI extends Application implements Loadable, Serializable {
         setupBackButton();
         setupAddTeamMenu();
 
+        updateButtonAccess();
         window.show();
-    }
-
-    private void setupStartPage() {
-        Label lblWelcome = new Label("Welcome to Fantasy NHL!");
-        lblWelcome.setFont(new Font(FONT, 30));
-
-        btnGetStarted = new Button();
-        btnGetStarted.setText("Get Started");
-        btnGetStarted.setFont(btnFont);
-        btnGetStarted.setOnAction(e -> {
-            window.setScene(mainMenu);
-        });
-
-        VBox startLayout = new VBox(50);
-        startLayout.setAlignment(Pos.CENTER);
-        startLayout.getChildren().addAll(lblWelcome, btnGetStarted);
-
-        startPage = new Scene(startLayout, WIDTH, HEIGHT);
-    }
-
-    private void setupMainMenu() {
-        btnAddTeam = new Button();
-        btnAddTeam.setText("Add Team");
-        btnAddTeam.setFont(btnFont);
-        btnAddTeam.setDisable(!teamCanBeAdded());
-        btnAddTeam.setOnAction(e -> {
-            window.setScene(addTeamMenu);
-        });
-
-        btnDeleteTeam = new Button();
-        btnDeleteTeam.setText("Delete Team");
-        btnDeleteTeam.setFont(btnFont);
-        // TODO: change from true/false to dependent on those boolean fields
-        btnDeleteTeam.setDisable(!teamCanBeRemoved());
-        btnDeleteTeam.setOnAction(e -> {
-
-        });
-
-        btnViewStandings = new Button();
-        btnViewStandings.setText("View Teams");
-        btnViewStandings.setFont(btnFont);
-        btnViewStandings.setOnAction(e -> {
-
-        });
-
-        btnDraft = new Button();
-        btnDraft.setText("Draft");
-        btnDraft.setFont(btnFont);
-        btnDraft.setDisable(!leagueCanDraft());
-        btnDraft.setOnAction(e -> {
-
-        });
-
-        btnAdvanceWeek = new Button();
-        btnAdvanceWeek.setText("Advance Week");
-        btnAdvanceWeek.setFont(btnFont);
-        // TODO: change from true/false to dependent on those boolean fields
-        btnAdvanceWeek.setDisable(!(leagueIsDrafted() && leagueCanAdvance()));
-        btnAdvanceWeek.setOnAction(e -> {
-
-        });
-
-        btnSave = new Button();
-        btnSave.setText("Save & Quit");
-        btnSave.setFont(btnFont);
-        btnSave.setOnAction(e -> {
-
-        });
-
-        btnQuit = new Button();
-        btnQuit.setText("Quit");
-        btnQuit.setFont(btnFont);
-        btnQuit.setOnAction(e -> {
-
-        });
-
-
-        VBox mainMenuLayout = new VBox(10);
-        mainMenuLayout.setAlignment(Pos.CENTER);
-        mainMenuLayout.getChildren().addAll(btnAddTeam, btnDeleteTeam, btnViewStandings, btnDraft, btnAdvanceWeek, btnSave, btnQuit);
-
-        mainMenu = new Scene(mainMenuLayout, WIDTH, HEIGHT);
     }
 
     private void setupBackButton() {
@@ -159,8 +79,7 @@ public class GUI extends Application implements Loadable, Serializable {
         btnBack.setText("Back");
         btnBack.setFont(btnFont);
         btnBack.setOnAction(e-> {
-            updateAddTeamInstructions();
-            window.setScene(mainMenu);
+            returnToMainMenu();
         });
     }
 
@@ -172,6 +91,7 @@ public class GUI extends Application implements Loadable, Serializable {
             createUserGeneratedTeam();
         });
         instructions = new Label();
+        instructions.setFont(new Font(FONT, 20));
 
         inputTeam = new TextField();
 
@@ -184,11 +104,23 @@ public class GUI extends Application implements Loadable, Serializable {
 
     private void updateAddTeamInstructions() {
         if(atLeastOneTeam()) {
-            instructions.setText(printActiveTeamNames());
+            instructions.setText("Please enter a unique team name." + "\n"+ printActiveTeamNames());
         } else {
             instructions.setText("You're the first team in the league!" + "\n" +
                     "Please enter a unique team name.");
         }
+    }
+
+    private void returnToMainMenu() {
+        updateButtonAccess();
+        window.setScene(mainMenu);
+    }
+
+    private void updateButtonAccess() {
+        btnAddTeam.setDisable(!teamCanBeAdded());
+        btnDeleteTeam.setDisable(!teamCanBeRemoved());
+        btnDraft.setDisable(!leagueCanDraft());
+        btnAdvanceWeek.setDisable(!(leagueIsDrafted() && leagueCanAdvance()));
     }
 
     private boolean atLeastOneTeam() {
@@ -231,7 +163,7 @@ public class GUI extends Application implements Loadable, Serializable {
             alert.setContentText("Success! " + teamName + " was added to the fantasy league.");
             alert.showAndWait();
             inputTeam.clear();
-            window.setScene(mainMenu);
+            returnToMainMenu();
         } catch (InvalidTeamException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Invalid Team Error");
@@ -256,6 +188,110 @@ public class GUI extends Application implements Loadable, Serializable {
         return teams;
     }
 
+    private void setupStartPage() {
+        Label lblWelcome = new Label("Welcome to Fantasy NHL!");
+        lblWelcome.setFont(new Font(FONT, 30));
+
+        btnGetStarted = new Button();
+        btnGetStarted.setText("Get Started");
+        btnGetStarted.setFont(btnFont);
+        btnGetStarted.setOnAction(e -> {
+            returnToMainMenu();
+        });
+
+        VBox startLayout = new VBox(50);
+        startLayout.setAlignment(Pos.CENTER);
+        startLayout.getChildren().addAll(lblWelcome, btnGetStarted);
+
+        startPage = new Scene(startLayout, WIDTH, HEIGHT);
+    }
+
+    private void setupMainMenu() {
+        btnAddTeam = new Button();
+        btnAddTeam.setText("Add Team");
+        btnAddTeam.setFont(btnFont);
+        btnAddTeam.setDisable(!teamCanBeAdded());
+        btnAddTeam.setOnAction(e -> {
+            updateAddTeamInstructions();
+            window.setScene(addTeamMenu);
+        });
+
+        btnDeleteTeam = new Button();
+        btnDeleteTeam.setText("Delete Team");
+        btnDeleteTeam.setFont(btnFont);
+        // TODO: change from true/false to dependent on those boolean fields
+        btnDeleteTeam.setDisable(!teamCanBeRemoved());
+        btnDeleteTeam.setOnAction(e -> {
+
+        });
+
+        btnViewStandings = new Button();
+        btnViewStandings.setText("View Teams");
+        btnViewStandings.setFont(btnFont);
+        btnViewStandings.setOnAction(e -> {
+
+        });
+
+        btnDraft = new Button();
+        btnDraft.setText("Draft");
+        btnDraft.setFont(btnFont);
+        btnDraft.setDisable(!leagueCanDraft());
+        btnDraft.setOnAction(e -> {
+
+        });
+
+        btnAdvanceWeek = new Button();
+        btnAdvanceWeek.setText("Advance Week");
+        btnAdvanceWeek.setFont(btnFont);
+        btnAdvanceWeek.setDisable(!(leagueIsDrafted() && leagueCanAdvance()));
+        btnAdvanceWeek.setOnAction(e -> {
+
+        });
+
+        btnSave = new Button();
+        btnSave.setText("Save & Quit");
+        btnSave.setFont(btnFont);
+        btnSave.setOnAction(e -> {
+            save();
+            window.close();
+        });
+
+        btnQuit = new Button();
+        btnQuit.setText("Quit");
+        btnQuit.setFont(btnFont);
+        btnQuit.setOnAction(e -> {
+            window.close();
+        });
+
+
+        VBox mainMenuLayout = new VBox(10);
+        mainMenuLayout.setAlignment(Pos.CENTER);
+        mainMenuLayout.getChildren().addAll(btnAddTeam, btnDeleteTeam, btnViewStandings, btnDraft, btnAdvanceWeek, btnSave, btnQuit);
+
+        mainMenu = new Scene(mainMenuLayout, WIDTH, HEIGHT);
+    }
+
+    @Override
+    //Modeled after Object Stream tutorial, 2018-10-01 [https://www.mkyong.com/java/how-to-read-and-write-java-object-to-a-file/]
+    // TODO: add specification and tests for this method
+    public void save() {
+        try {
+            FileOutputStream f = new FileOutputStream(new File("fantasyManager.txt"));
+            ObjectOutputStream o = new ObjectOutputStream(f);
+
+            // Write objects to file
+            o.writeObject(fantasyManager);
+
+            o.close();
+            f.close();
+
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Error initializing stream");
+        }
+    }
 
     @Override
     //Modeled after Object Stream tutorial, 2018-10-01 [https://www.mkyong.com/java/how-to-read-and-write-java-object-to-a-file/]
