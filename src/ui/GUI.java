@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static javafx.scene.text.TextAlignment.CENTER;
 import static managers.DraftManager.DraftType.*;
@@ -37,6 +38,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private final static int HEIGHT = 650;
     private final static String FONT = "Helvetica";
     private final static Font btnFont = new Font(FONT, 14);
+
+    private List<Team> draftOrder = new ArrayList<>();
+    private int currentDraftPosition = 0;
 
     private FantasyManager fantasyManager;
     private Label weeksLabel = new Label();
@@ -130,7 +134,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private void setupPlayerComboBox() {
         playersCombo = new ComboBox<>();
-//        updateActivePlayersCombo();
+        updateActivePlayersCombo();
         playersCombo.setPromptText("Select the player to draft!");
         playersCombo.setConverter(new StringConverter<Player>() {
             @Override
@@ -154,7 +158,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnSubmitDraft.setFont(btnFont);
         btnSubmitDraft.setOnAction(e -> {
 //            draftPlayer(playersCombo.getValue());
-//            updateActivePlayersCombo();
+            updateActivePlayersCombo();
         });
 
         Label draftLabel = new Label();
@@ -323,38 +327,66 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private void draftTeams() {
         window.setScene(draftMenu);
-                try {
-            List<Team> draftList = fantasyManager.selectDraftOrder();
-            announceDraftOrder(draftList);
-
-//            System.out.println("The draft is beginning!" + "\n");
+        try {
+            draftOrder = fantasyManager.selectDraftOrder();
+            announceDraftOrder(draftOrder);
+            updateActivePlayersCombo();
 
             if (fantasyManager.getDraftManager().getDraftType().equals(DraftManager.DraftType.AutoDraft)) {
-                fantasyManager.getDraftManager().autoDraft(draftList, fantasyManager);
+                fantasyManager.getDraftManager().autoDraft(draftOrder, fantasyManager);
             } else {
-
 //                int i = 1;
 //                for (Team t : draftList) {
 //                    System.out.println("\n" + " Selection " + i + ": " + t.getTeamName() + "\n");
 //                    System.out.println(fantasyManager.getDraftManager().getDraftValidator().playersNeededByPosition(t));
 //                    selectPlayer(t);
 //                    i++;
-                }
+            }
 //            }
-//            fantasyManager.setDrafted();
-//            updateLeague();
-//
-//            System.out.println("\n" + "That concludes the Fantasy Draft! Good luck to all players!");
+            fantasyManager.setDrafted();
+            updateLeague();
+
+            returnToMainMenu();
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Fantasy Draft");
+            alert.setContentText("That concludes the fantasy draft! Good luck to all players!");
+            alert.showAndWait();
 
         } catch (ImpossibleDraftException e) {
-            System.out.println(e.getMsg());
+            returnToMainMenu();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Fantasy Draft");
+            alert.setContentText(e.getMsg());
+            alert.showAndWait();
+        }
+    }
+
+    private void updateLeague() {
+        if (fantasyManager.currentWeek() < FANTASY_WEEKS) {
+            try {
+
+                fantasyManager.advanceFantasyWeekByOne();
+
+                for (Team t : fantasyManager.getLeague().getTeams()) {
+                    t.updateCurrentWeekFantasyPoints(fantasyManager.currentWeek());
+                    t.updateOverallFantasyPoints(fantasyManager.currentWeek());
+                }
+
+                fantasyManager.updatePlayersOnWeek();
+
+            } catch (InvalidFantasyWeekException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Fantasy Week Error");
+                alert.setContentText("You cannot advance to that fantasy week.");
+                alert.showAndWait();
+            }
         }
     }
 
     private void announceDraftOrder(List<Team> draftList) {
         String order = formatDraftOrder(draftList);
 
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Draft Lottery Results");
         alert.setContentText("The draft lottery results are in!" + "\n" +
                 "The random draft order is..." + order);
@@ -363,10 +395,10 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private String formatDraftOrder(List<Team> draftList) {
         int size = fantasyManager.size();
-        String order = "\n";
+        String order = "";
         for (int i = 1; i <= size; i++) {
             Team t = draftList.get(i - 1);
-            order+= i + ": " + t.getTeamName();
+            order += "\n" + i + ": " + t.getTeamName();
         }
         return order;
     }
@@ -374,6 +406,23 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private void updateActiveTeamsCombo() {
         teamsCombo.getItems().clear();
         teamsCombo.getItems().addAll(fantasyManager.getLeague().getTeams());
+        List<Team> teams = fantasyManager.getLeague().getTeams();
+    }
+
+    private void updateActivePlayersCombo() {
+        playersCombo.getItems().clear();
+        List<Player> players = new ArrayList<>();
+        players = convertPlayerSetToList(fantasyManager.getLeague().getAvailablePlayers());
+        playersCombo.getItems().addAll(players);
+    }
+
+    private List<Player> convertPlayerSetToList(Set<Player> players) {
+        List<Player> list = new ArrayList<>();
+
+        for (Player p : players) {
+            list.add(p);
+        }
+        return list;
     }
 
 
@@ -486,7 +535,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnAdvanceWeek.setFont(btnFont);
         btnAdvanceWeek.setDisable(!(leagueIsDrafted() && leagueCanAdvance()));
         btnAdvanceWeek.setOnAction(e -> {
-
+            updateLeague();
+            updateButtonAccess();
+            updateWeekLabel();
         });
 
         btnSave = new Button();
