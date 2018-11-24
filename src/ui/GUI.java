@@ -14,6 +14,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
@@ -52,10 +54,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private Label playersNeededLabel = new Label();
 
     private TextField inputTeam;
-
+    private ScrollPane standingScroll;
 
     private Stage window;
-    private Stage leaderboard;
 
     private Scene startPage;
     private Scene mainMenu;
@@ -167,13 +168,13 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private VBox displayRoster(Team t) {
 
-        Label team = new Label();
-        team.setText(t.getTeamName());
-        team.setFont(new Font(FONT, 20));
+//        Label team = new Label();
+//        team.setText(t.getTeamName());
+//        team.setFont(new Font(FONT, 20));
 
         VBox roster = new VBox(10);
         roster.setAlignment(Pos.CENTER);
-        roster.getChildren().addAll(team);
+//        roster.getChildren().addAll(team);
 
         for (Player p : t.getPlayers()) {
             HBox player = displayPlayer(p);
@@ -187,20 +188,26 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private HBox displayPlayer(Player p) {
         String fileName = "C:\\Users\\Lorenzo Bisceglia\\Google Drive\\1 - School\\1 - BCS\\CPSC 210\\Project\\projectw1_team29\\playerPhotos\\" + p.getPlayerID() + ".jpg";
 
-        HBox record = new HBox(10);
+        HBox record = new HBox(15);
         record.setAlignment(Pos.CENTER_LEFT);
 
         String title = p.getPlayerName() + " (" + p.getPosition() + ")";
         Label player = new Label();
         player.setText(title);
-        player.setFont(new Font(FONT, 12));
+        player.setFont(new Font(FONT, 20));
 
         try {
             Image img = new Image(new FileInputStream(fileName));
             ImageView imageView = new ImageView(img);
             imageView.setPreserveRatio(true);
-            imageView.setFitHeight(50);
-            record.getChildren().addAll(imageView);
+            int radius = 72;
+
+            Circle circle = new Circle(radius);
+            circle.setFill(new ImagePattern(img));
+
+//            imageView.autosize();
+//            imageView.setFitHeight(height);
+            record.getChildren().addAll(circle);
         } catch (FileNotFoundException e) {
 
         }
@@ -248,10 +255,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         standingsLabel.setTextAlignment(CENTER);
 
         Label rosterLabel = new Label();
-        rosterLabel.setText("Rosters");
+        rosterLabel.setText("Roster");
         rosterLabel.setFont(new Font(FONT, 30));
         rosterLabel.setTextAlignment(CENTER);
-
 
         Label overallStandingsLabel = new Label();
         overallStandingsLabel.setText("Overall" + displayOverallLeaders());
@@ -263,15 +269,37 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         weeklyStandingsLabel.setFont(labelFont);
         weeklyStandingsLabel.setTextAlignment(LEFT);
 
-        ScrollPane overallScroll = new ScrollPane(displayAllTeams());
+        ComboBox<Team> teamStandingCB = new ComboBox<>();
+        teamStandingCB.setPromptText("Select the team to view.");
+        teamStandingCB.getItems().addAll(fantasyManager.getLeague().getTeams());
+        teamStandingCB.setConverter(new StringConverter<Team>() {
+            @Override
+            public String toString(Team object) {
+                return object.getTeamName();
+            }
 
-        HBox rankingsLayout = new HBox(75);
+            @Override
+            public Team fromString(String string) {
+                return null;
+            }
+        });
+
+        teamStandingCB.setOnAction(e-> {
+            Team t = teamStandingCB.getValue();
+            standingScroll.setContent(displayRoster(t));
+            window.setScene(standingsMenu);
+        });
+
+        standingScroll = new ScrollPane(new VBox());
+        standingScroll.setPrefViewportHeight(HEIGHT/3);
+
+        HBox rankingsLayout = new HBox(50);
         rankingsLayout.setAlignment(Pos.CENTER);
         rankingsLayout.getChildren().addAll(overallStandingsLabel, weeklyStandingsLabel);
 
         VBox standingsLayout = new VBox(10);
         standingsLayout.setAlignment(Pos.CENTER);
-        standingsLayout.getChildren().addAll(standingsLabel, rankingsLayout, rosterLabel, overallScroll, btnBackStandings);
+        standingsLayout.getChildren().addAll(standingsLabel, rankingsLayout, rosterLabel, teamStandingCB, standingScroll, btnBackStandings);
 
         standingsMenu = new Scene(standingsLayout, WIDTH, HEIGHT);
     }
