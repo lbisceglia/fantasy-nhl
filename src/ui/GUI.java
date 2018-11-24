@@ -1,5 +1,6 @@
 package ui;
 
+import exceptions.ImpossibleDraftException;
 import exceptions.InvalidFantasyWeekException;
 import exceptions.InvalidTeamException;
 import interfaces.Loadable;
@@ -12,15 +13,21 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import managers.DraftManager;
 import managers.FantasyManager;
 import models.League;
+import models.Player;
 import models.Team;
 
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import static javafx.scene.text.TextAlignment.CENTER;
+import static managers.DraftManager.DraftType.*;
 import static managers.FantasyManager.FANTASY_WEEKS;
 import static models.League.MAX_PARTICIPANTS;
 import static models.League.MIN_PARTICIPANTS;
@@ -29,21 +36,26 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private final static int WIDTH = 500;
     private final static int HEIGHT = 650;
     private final static String FONT = "Helvetica";
-    private final static Font btnFont = new Font(FONT, 16);
+    private final static Font btnFont = new Font(FONT, 14);
 
     private FantasyManager fantasyManager;
     private Label weeksLabel = new Label();
     private Label instructions = new Label();
     private TextField inputTeam;
 
+
     private Stage window;
+    private Stage leaderboard;
+
     private Scene startPage;
     private Scene mainMenu;
     private Scene addTeamMenu;
     private Scene deleteTeamMenu;
+    private Scene draftMenu;
     private Scene Standings;
 
     private ComboBox<Team> teamsCombo;
+    private ComboBox<Player> playersCombo;
 
     private Button btnGetStarted;
     private Button btnAddTeam;
@@ -53,15 +65,21 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private Button btnAdvanceWeek;
     private Button btnSave;
     private Button btnQuit;
-//    private Button btnBack;
+
     private Button btnBackAddTeam;
     private Button btnBackDeleteTeam;
+
     private Button btnSubmitAddTeam;
     private Button btnSubmitDeleteTeam;
+    private Button btnSubmitDraft;
 
     public static void main(String[] args) {
         launch(args);
     }
+
+    //Dialogs modelled after: https://code.makery.ch/blog/javafx-dialogs-official/
+
+    // TODO: LOAD ALL PLAYER STATS RIGHT WHEN THE APP IS LAUNCHED
 
     // TODO: Make sure correct buttons are faded even after loading from a saved state
     // Something like a *check button state* method run in the top of the constructor might be a good idea
@@ -79,6 +97,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         setupTeamComboBox();
         setupAddTeamMenu();
         setupDeleteTeamMenu();
+        setupDraftMenu();
 
         updateButtonAccess();
         window.show();
@@ -108,6 +127,48 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             }
         });
     }
+
+    private void setupPlayerComboBox() {
+        playersCombo = new ComboBox<>();
+//        updateActivePlayersCombo();
+        playersCombo.setPromptText("Select the player to draft!");
+        playersCombo.setConverter(new StringConverter<Player>() {
+            @Override
+            public String toString(Player object) {
+                return object.getPlayerName() + " (" + object.getPosition() + ")";
+            }
+
+            @Override
+            public Player fromString(String string) {
+                return null;
+            }
+        });
+    }
+
+    private void setupDraftMenu() {
+
+        setupPlayerComboBox();
+
+        btnSubmitDraft = new Button();
+        btnSubmitDraft.setText("Draft Player");
+        btnSubmitDraft.setFont(btnFont);
+        btnSubmitDraft.setOnAction(e -> {
+//            draftPlayer(playersCombo.getValue());
+//            updateActivePlayersCombo();
+        });
+
+        Label draftLabel = new Label();
+        draftLabel.setText("Fantasy Draft 2018-2019");
+        draftLabel.setFont(new Font(FONT, 30));
+
+        VBox draftLayout = new VBox(10);
+        draftLayout.setAlignment(Pos.CENTER);
+        draftLayout.getChildren().addAll(draftLabel, playersCombo, btnSubmitDraft);
+
+        draftMenu = new Scene(draftLayout, WIDTH, HEIGHT);
+
+    }
+
 
     private void setupDeleteTeamMenu() {
         btnBackDeleteTeam = new Button();
@@ -213,7 +274,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Information Dialog");
             alert.setContentText("Success! " + teamName + " was added to the fantasy league.");
-            alert.showAndWait();
+            Optional<ButtonType> buttonType = alert.showAndWait();
             inputTeam.clear();
             returnToMainMenu();
         } catch (InvalidTeamException e) {
@@ -240,6 +301,74 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             alert.showAndWait();
             returnToMainMenu();
         }
+    }
+
+    private void selectDraftTypeAndBeginDraft() {
+        List<DraftManager.DraftType> choices = new ArrayList<>();
+        choices.add(AutoDraft);
+        choices.add(Regular);
+        choices.add(Snake);
+
+        ChoiceDialog<DraftManager.DraftType> dialog = new ChoiceDialog<>(AutoDraft, choices);
+        dialog.setHeaderText("Draft Type");
+        dialog.setContentText("Choose the type of draft you want to have:");
+
+        DraftManager.DraftType result = dialog.showAndWait().orElse(null);
+        if (!(result == null)) {
+            fantasyManager.getDraftManager().setDraftType(result);
+            draftTeams();
+        }
+    }
+
+
+    private void draftTeams() {
+        window.setScene(draftMenu);
+                try {
+            List<Team> draftList = fantasyManager.selectDraftOrder();
+            announceDraftOrder(draftList);
+
+//            System.out.println("The draft is beginning!" + "\n");
+
+            if (fantasyManager.getDraftManager().getDraftType().equals(DraftManager.DraftType.AutoDraft)) {
+                fantasyManager.getDraftManager().autoDraft(draftList, fantasyManager);
+            } else {
+
+//                int i = 1;
+//                for (Team t : draftList) {
+//                    System.out.println("\n" + " Selection " + i + ": " + t.getTeamName() + "\n");
+//                    System.out.println(fantasyManager.getDraftManager().getDraftValidator().playersNeededByPosition(t));
+//                    selectPlayer(t);
+//                    i++;
+                }
+//            }
+//            fantasyManager.setDrafted();
+//            updateLeague();
+//
+//            System.out.println("\n" + "That concludes the Fantasy Draft! Good luck to all players!");
+
+        } catch (ImpossibleDraftException e) {
+            System.out.println(e.getMsg());
+        }
+    }
+
+    private void announceDraftOrder(List<Team> draftList) {
+        String order = formatDraftOrder(draftList);
+
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Draft Lottery Results");
+        alert.setContentText("The draft lottery results are in!" + "\n" +
+                "The random draft order is..." + order);
+        alert.showAndWait();
+    }
+
+    private String formatDraftOrder(List<Team> draftList) {
+        int size = fantasyManager.size();
+        String order = "\n";
+        for (int i = 1; i <= size; i++) {
+            Team t = draftList.get(i - 1);
+            order+= i + ": " + t.getTeamName();
+        }
+        return order;
     }
 
     private void updateActiveTeamsCombo() {
@@ -274,7 +403,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             returnToMainMenu();
         });
 
-        VBox startLayout = new VBox(50);
+        VBox startLayout = new VBox(40);
         startLayout.setAlignment(Pos.CENTER);
         startLayout.getChildren().addAll(lblWelcome, btnGetStarted);
 
@@ -289,10 +418,11 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             dates = "\n" + getWeeksFantasyDates(fantasyManager.currentWeek());
         }
         if (moreTeamsNeeded()) {
-            requirement = "\n" + "*** Please create " + (MIN_PARTICIPANTS - fantasyManager.size()) + " more teams in order to play ***";
+            requirement = "\n" + "Please create " + (MIN_PARTICIPANTS - fantasyManager.size()) + " more team(s) in order to draft.";
         }
         weeksLabel.setText(week + dates + requirement);
         weeksLabel.setFont(new Font(FONT, 16));
+        weeksLabel.setTextAlignment(CENTER);
     }
 
     private String getWeeksFantasyDates(int week) {
@@ -312,7 +442,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         updateWeekLabel();
 
         Label mainLabel = new Label();
-        mainLabel.setText("Fantasy NHL");
+        mainLabel.setText("Fantasy NHL  2018-19");
         mainLabel.setFont(new Font(FONT, 30));
 
         btnAddTeam = new Button();
@@ -321,6 +451,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnAddTeam.setDisable(!teamCanBeAdded());
         btnAddTeam.setOnAction(e -> {
             updateAddTeamInstructions();
+            inputTeam.requestFocus();
             window.setScene(addTeamMenu);
         });
 
@@ -330,6 +461,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnDeleteTeam.setDisable(!teamCanBeRemoved());
         btnDeleteTeam.setOnAction(e -> {
             updateActiveTeamsCombo();
+            teamsCombo.requestFocus();
             window.setScene(deleteTeamMenu);
         });
 
@@ -345,7 +477,8 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnDraft.setFont(btnFont);
         btnDraft.setDisable(!leagueCanDraft());
         btnDraft.setOnAction(e -> {
-
+            playersCombo.requestFocus();
+            selectDraftTypeAndBeginDraft();
         });
 
         btnAdvanceWeek = new Button();
