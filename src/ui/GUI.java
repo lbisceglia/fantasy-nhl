@@ -1,6 +1,7 @@
 package ui;
 
 import exceptions.ImpossibleDraftException;
+import exceptions.InvalidDraftChoiceException;
 import exceptions.InvalidFantasyWeekException;
 import exceptions.InvalidTeamException;
 import interfaces.Loadable;
@@ -29,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static javafx.scene.text.TextAlignment.CENTER;
+import static javafx.scene.text.TextAlignment.LEFT;
 import static managers.DraftManager.DraftType.*;
 import static managers.FantasyManager.FANTASY_WEEKS;
 import static models.League.MAX_PARTICIPANTS;
@@ -46,6 +48,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private FantasyManager fantasyManager;
     private Label weeksLabel = new Label();
     private Label instructions = new Label();
+    private Label selectionLabel = new Label();
+    private Label playersNeededLabel = new Label();
+
     private TextField inputTeam;
 
 
@@ -73,6 +78,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private Button btnBackAddTeam;
     private Button btnBackDeleteTeam;
+    private Button btnBackDraft;
 
     private Button btnSubmitAddTeam;
     private Button btnSubmitDeleteTeam;
@@ -158,8 +164,21 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnSubmitDraft.setText("Draft Player");
         btnSubmitDraft.setFont(btnFont);
         btnSubmitDraft.setOnAction(e -> {
-//            draftPlayer(playersCombo.getValue());
-            updateActivePlayersCombo();
+            selectPlayer();
+            if (currentDraftPosition >= draftOrder.size()) {
+
+                fantasyManager.setDrafted();
+                updateLeague();
+
+                returnToMainMenu();
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Fantasy Draft");
+                alert.setContentText("That concludes the fantasy draft! Good luck to all players!");
+                alert.showAndWait();
+            } else {
+                updateDraftMenu();
+            }
         });
 
         Label draftLabel = new Label();
@@ -168,10 +187,112 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
         VBox draftLayout = new VBox(10);
         draftLayout.setAlignment(Pos.CENTER);
-        draftLayout.getChildren().addAll(draftLabel, playersCombo, btnSubmitDraft);
+        draftLayout.getChildren().addAll(draftLabel, selectionLabel, playersNeededLabel, playersCombo, btnSubmitDraft);
 
         draftMenu = new Scene(draftLayout, WIDTH, HEIGHT);
 
+    }
+
+    private void selectDraftTypeAndBeginDraft() {
+        List<DraftManager.DraftType> choices = new ArrayList<>();
+        choices.add(AutoDraft);
+        choices.add(Regular);
+        choices.add(Snake);
+
+        ChoiceDialog<DraftManager.DraftType> dialog = new ChoiceDialog<>(AutoDraft, choices);
+        dialog.setHeaderText("Draft Type");
+        dialog.setContentText("Choose the type of draft you want to have:");
+
+        DraftManager.DraftType result = dialog.showAndWait().orElse(null);
+        if (!(result == null)) {
+            fantasyManager.getDraftManager().setDraftType(result);
+            beginDraft();
+        }
+    }
+
+    private void selectPlayer() {
+
+        // TODO: Make this a generic select method that works for AutoDraft too
+        Player player = playersCombo.getValue();
+
+        if (player == null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Invalid Draft Choice Error");
+            alert.setContentText("You must choose a valid player to draft.");
+            alert.showAndWait();
+        } else {
+            try {
+                Team team = draftOrder.get(currentDraftPosition);
+
+                fantasyManager.getDraftManager().getDraftValidator().checkDraftChoiceIsValid(team, player);
+                addPlayerToFantasyTeam(team, player);
+                updateDraftMenu();
+
+                currentDraftPosition++;
+
+            } catch (InvalidDraftChoiceException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Invalid Draft Choice Error");
+                alert.setContentText("You cannot choose another player of that position.");
+                alert.showAndWait();
+            }
+        }
+    }
+
+    private void updateDraftMenu() {
+        updateActivePlayersCombo();
+        updateDraftLabels();
+    }
+
+    private void updateDraftLabels() {
+        Team team = draftOrder.get(currentDraftPosition);
+        selectionLabel.setText("Selection " + (currentDraftPosition + 1) + ": " + team.getTeamName());
+        selectionLabel.setFont(new Font(FONT, 24));
+        selectionLabel.setTextAlignment(CENTER);
+
+        playersNeededLabel.setText(fantasyManager.getDraftManager().getDraftValidator().playersNeededByPosition(team));
+        playersNeededLabel.setFont(new Font(FONT, 12));
+        selectionLabel.setTextAlignment(LEFT);
+    }
+
+
+    private void addPlayerToFantasyTeam(Team team, Player player) {
+        team.addPlayer(player);
+        fantasyManager.getLeague().getAvailablePlayers().remove(player);
+
+        String msg = "Success! " + player.getPlayerName() + " was added to " + team.getTeamName() + ".";
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Information Dialog");
+        alert.setContentText(msg);
+        alert.showAndWait();
+    }
+
+
+    private void beginDraft() {
+        try {
+            draftOrder = fantasyManager.selectDraftOrder();
+            announceDraftOrder(draftOrder);
+            updateDraftMenu();
+
+            if (fantasyManager.getDraftManager().getDraftType().equals(DraftManager.DraftType.AutoDraft)) {
+                fantasyManager.getDraftManager().autoDraft(draftOrder, fantasyManager);
+            } else {
+                window.setScene(draftMenu);
+//                int i = 1;
+//                for (Team t : draftList) {
+//                    System.out.println("\n" + " Selection " + i + ": " + t.getTeamName() + "\n");
+//                    System.out.println(fantasyManager.getDraftManager().getDraftValidator().playersNeededByPosition(t));
+//                    selectPlayer(t);
+//                    i++;
+            }
+
+        } catch (ImpossibleDraftException e) {
+            returnToMainMenu();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Fantasy Draft");
+            alert.setContentText(e.getMsg());
+            alert.showAndWait();
+        }
     }
 
 
@@ -308,71 +429,17 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         }
     }
 
-    private void selectDraftTypeAndBeginDraft() {
-        List<DraftManager.DraftType> choices = new ArrayList<>();
-        choices.add(AutoDraft);
-        choices.add(Regular);
-        choices.add(Snake);
-
-        ChoiceDialog<DraftManager.DraftType> dialog = new ChoiceDialog<>(AutoDraft, choices);
-        dialog.setHeaderText("Draft Type");
-        dialog.setContentText("Choose the type of draft you want to have:");
-
-        DraftManager.DraftType result = dialog.showAndWait().orElse(null);
-        if (!(result == null)) {
-            fantasyManager.getDraftManager().setDraftType(result);
-            draftTeams();
-        }
-    }
-
-
-    private void draftTeams() {
-        window.setScene(draftMenu);
-        try {
-            draftOrder = fantasyManager.selectDraftOrder();
-            announceDraftOrder(draftOrder);
-            updateActivePlayersCombo();
-
-            if (fantasyManager.getDraftManager().getDraftType().equals(DraftManager.DraftType.AutoDraft)) {
-                fantasyManager.getDraftManager().autoDraft(draftOrder, fantasyManager);
-            } else {
-//                int i = 1;
-//                for (Team t : draftList) {
-//                    System.out.println("\n" + " Selection " + i + ": " + t.getTeamName() + "\n");
-//                    System.out.println(fantasyManager.getDraftManager().getDraftValidator().playersNeededByPosition(t));
-//                    selectPlayer(t);
-//                    i++;
-            }
-//            }
-            fantasyManager.setDrafted();
-            updateLeague();
-
-            returnToMainMenu();
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Fantasy Draft");
-            alert.setContentText("That concludes the fantasy draft! Good luck to all players!");
-            alert.showAndWait();
-
-        } catch (ImpossibleDraftException e) {
-            returnToMainMenu();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Fantasy Draft");
-            alert.setContentText(e.getMsg());
-            alert.showAndWait();
-        }
-    }
-
     public void updatePlayersOnWeek() {
         String update = "";
         for (Team t : fantasyManager.getLeague().getTeams()) {
             double points = t.getCurrentWeekFantasyPoints();
             String pts = new DecimalFormat("#.##").format(points);
-            update += "\n"+ t.getTeamName() + " has earned " + pts + " fantasy points this week.";
+            update += "\n" + t.getTeamName() + " has earned " + pts + " fantasy points this week.";
         }
         String header = "The results for week " + fantasyManager.currentWeek() + " are in!" + "\n";
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Fantasy Draft");
-        alert.setContentText(header+update);
+        alert.setContentText(header + update);
         alert.showAndWait();
     }
 

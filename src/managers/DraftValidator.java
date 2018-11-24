@@ -79,7 +79,7 @@ public class DraftValidator implements Serializable {
         int defencemenNeeded = ALLOWED_DEFENCEMEN - countPlayersOfPosition(players, Player.Position.D);
         int goaliesNeeded = ALLOWED_GOALIES - countPlayersOfPosition(players, Player.Position.G);
 
-        String msg = "Your team still needs the following postiions filled:";
+        String msg = "Your team still needs the following positions filled:";
         String msgC = "\n" + "[" + centersNeeded + "] x Centers";
         String msgRW = "\n" + "[" + rightWingsNeeded + "] x Right Wingers";
         String msgLW = "\n" + "[" + leftWingsNeeded + "] x Left Wingers";
