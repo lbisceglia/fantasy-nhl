@@ -10,6 +10,7 @@ import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -24,10 +25,7 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static javafx.scene.text.TextAlignment.CENTER;
 import static javafx.scene.text.TextAlignment.LEFT;
@@ -62,7 +60,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private Scene addTeamMenu;
     private Scene deleteTeamMenu;
     private Scene draftMenu;
-    private Scene Standings;
+    private Scene standingsMenu;
 
     private ComboBox<Team> teamsCombo;
     private ComboBox<Player> playersCombo;
@@ -78,7 +76,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private Button btnBackAddTeam;
     private Button btnBackDeleteTeam;
-    private Button btnBackDraft;
+    private Button btnBackStandings;
 
     private Button btnSubmitAddTeam;
     private Button btnSubmitDeleteTeam;
@@ -109,6 +107,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         setupAddTeamMenu();
         setupDeleteTeamMenu();
         setupDraftMenu();
+        setupStandingsMenu();
 
         updateButtonAccess();
         window.show();
@@ -184,7 +183,95 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     }
 
     private void setupStandingsMenu() {
-        
+        Font labelFont = new Font(FONT, 16);
+
+        btnBackStandings = new Button();
+        setupBackButton(btnBackStandings);
+
+        Label standingsLabel = new Label();
+        standingsLabel.setText("Standings");
+        standingsLabel.setFont(new Font(FONT, 30));
+        standingsLabel.setTextAlignment(CENTER);
+
+        Label rosterLabel = new Label();
+        rosterLabel.setText("Rosters");
+        rosterLabel.setFont(new Font(FONT, 30));
+        rosterLabel.setTextAlignment(CENTER);
+
+
+        Label overallStandingsLabel = new Label();
+        overallStandingsLabel.setText("Overall" + displayOverallLeaders());
+        overallStandingsLabel.setFont(labelFont);
+        overallStandingsLabel.setTextAlignment(LEFT);
+
+        Label weeklyStandingsLabel = new Label();
+        weeklyStandingsLabel.setText("Last Week (Week " + (fantasyManager.currentWeek()-1) + ")" + displayThisWeeksLeaders());
+        weeklyStandingsLabel.setFont(labelFont);
+        weeklyStandingsLabel.setTextAlignment(LEFT);
+
+        ScrollPane overallScroll = new ScrollPane();
+
+        HBox rankingsLayout = new HBox(75);
+        rankingsLayout.setAlignment(Pos.CENTER);
+        rankingsLayout.getChildren().addAll(overallStandingsLabel,weeklyStandingsLabel);
+
+        VBox standingsLayout = new VBox(10);
+        standingsLayout.setAlignment(Pos.CENTER);
+        standingsLayout.getChildren().addAll(standingsLabel, rankingsLayout, rosterLabel, btnBackStandings);
+
+        standingsMenu = new Scene(standingsLayout, WIDTH, HEIGHT);
+    }
+
+    private String displayOverallLeaders() {
+        List<Team> teams = fantasyManager.getLeague().getTeams();
+        //Modelled after Stack Overflow post: https://stackoverflow.com/questions/19471005/sorting-an-arraylist-of-objects-alphabetically
+        Collections.sort(teams,Comparator.comparing(Team :: getOverallFantasyPoints).reversed());
+        return printOverallLeaders(teams);
+    }
+
+    private String displayThisWeeksLeaders() {
+        List<Team> teams = fantasyManager.getLeague().getTeams();
+        //Modelled after Stack Overflow post: https://stackoverflow.com/questions/19471005/sorting-an-arraylist-of-objects-alphabetically
+        Collections.sort(teams,Comparator.comparing(Team :: getCurrentWeekFantasyPoints).reversed());
+        return printWeekLeaders(teams);
+    }
+
+
+    private String printOverallLeaders(List<Team> teams) {
+        String overall = "";
+        double previous = 0;
+        int i = 1;
+        for(Team t : teams) {
+            if (t.getOverallFantasyPoints() < previous) {
+                i++;
+            }
+            String pts = new DecimalFormat("#.#").format(t.getOverallFantasyPoints());
+            String team = i + " - " + t.getTeamName() + " (" + pts + " points)";
+            previous = t.getOverallFantasyPoints();
+            overall += "\n" + team;
+        }
+        return overall;
+    }
+
+
+    private String printWeekLeaders(List<Team> teams) {
+        String week = "";
+        double previous = 0;
+        int i = 1;
+        for(Team t : teams) {
+            if (t.getCurrentWeekFantasyPoints() < previous) {
+                i++;
+            }
+            String pts = new DecimalFormat("#.#").format(t.getCurrentWeekFantasyPoints());
+            String team = i + " - " + t.getTeamName() + " (" + pts + " points)";
+            previous = t.getCurrentWeekFantasyPoints();
+            week += "\n" + team;
+        }
+        return week;
+    }
+
+    private void updateStandingsMenu() {
+        //TODO: FILL THIS IN
     }
 
 
@@ -200,6 +287,14 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             alert.setContentText("That concludes the fantasy draft! Good luck to all players!");
         }
         alert.showAndWait();
+        try {
+            fantasyManager.advanceFantasyWeekByOne();
+        } catch (InvalidFantasyWeekException e) {
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Advance Week Error");
+            error.setContentText("You cannot advance to that fantasy week.");
+            error.showAndWait();
+        }
         returnToMainMenu();
     }
 
@@ -453,7 +548,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         if (fantasyManager.currentWeek() < FANTASY_WEEKS) {
             try {
 
-                fantasyManager.advanceFantasyWeekByOne();
+//                fantasyManager.advanceFantasyWeekByOne();
 
                 for (Team t : fantasyManager.getLeague().getTeams()) {
                     t.updateCurrentWeekFantasyPoints(fantasyManager.currentWeek());
@@ -461,6 +556,8 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
                 }
 
                 updatePlayersOnWeek();
+
+                fantasyManager.advanceFantasyWeekByOne();
 
             } catch (InvalidFantasyWeekException e) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -607,7 +704,8 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnViewStandings.setFont(btnFont);
         btnViewStandings.setDisable(!leagueIsDrafted());
         btnViewStandings.setOnAction(e -> {
-
+            setupStandingsMenu();
+            window.setScene(standingsMenu);
         });
 
         btnDraft = new Button();
