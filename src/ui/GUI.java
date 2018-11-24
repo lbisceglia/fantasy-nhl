@@ -20,6 +20,7 @@ import models.Player;
 import models.Team;
 
 import java.io.*;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -361,6 +362,20 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         }
     }
 
+    public void updatePlayersOnWeek() {
+        String update = "";
+        for (Team t : fantasyManager.getLeague().getTeams()) {
+            double points = t.getCurrentWeekFantasyPoints();
+            String pts = new DecimalFormat("#.##").format(points);
+            update += "\n"+ t.getTeamName() + " has earned " + pts + " fantasy points this week.";
+        }
+        String header = "The results for week " + fantasyManager.currentWeek() + " are in!" + "\n";
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Fantasy Draft");
+        alert.setContentText(header+update);
+        alert.showAndWait();
+    }
+
     private void updateLeague() {
         if (fantasyManager.currentWeek() < FANTASY_WEEKS) {
             try {
@@ -372,7 +387,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
                     t.updateOverallFantasyPoints(fantasyManager.currentWeek());
                 }
 
-                fantasyManager.updatePlayersOnWeek();
+                updatePlayersOnWeek();
 
             } catch (InvalidFantasyWeekException e) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);

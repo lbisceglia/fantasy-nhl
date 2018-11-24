@@ -141,7 +141,7 @@ public class FantasyNHL implements Serializable, Saveable, Loadable {
                     t.updateOverallFantasyPoints(fantasyManager.currentWeek());
                 }
 
-                fantasyManager.updatePlayersOnWeek();
+//                fantasyManager.updatePlayersOnWeek();
 
             } catch (InvalidFantasyWeekException e) {
                 System.out.println("You cannot advance to that fantasy week.");

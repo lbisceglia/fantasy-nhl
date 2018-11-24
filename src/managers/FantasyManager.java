@@ -13,7 +13,6 @@ import models.Team;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URL;
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -125,15 +124,6 @@ public class FantasyManager implements Serializable {
             fantasyPoints += amount * POINTS_PER_WIN;
         }
         stat.setFantasyPoints(fantasyPoints);
-    }
-
-    public void updatePlayersOnWeek() {
-        System.out.println("\n" + "The results for week " + currentFantasyWeek + " are in!" + "\n");
-        for (Team t : getLeague().getTeams()) {
-            double points = t.getCurrentWeekFantasyPoints();
-            String pts = new DecimalFormat("#.##").format(points);
-            System.out.println("Update: " + t.getTeamName() + " has earned " + pts + " fantasy points this week!");
-        }
     }
 
     // EFFECTS: advances the fantasy week by one week if not in the final week
