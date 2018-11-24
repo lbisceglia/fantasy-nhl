@@ -10,6 +10,8 @@ import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -155,6 +157,58 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         });
     }
 
+    private VBox displayAllTeams() {
+        VBox teams = new VBox(30);
+        for (Team t : fantasyManager.getLeague().getTeams()) {
+            teams.getChildren().add(displayRoster(t));
+        }
+        return teams;
+    }
+
+    private VBox displayRoster(Team t) {
+
+        Label team = new Label();
+        team.setText(t.getTeamName());
+        team.setFont(new Font(FONT, 20));
+
+        VBox roster = new VBox(10);
+        roster.setAlignment(Pos.CENTER);
+        roster.getChildren().addAll(team);
+
+        for (Player p : t.getPlayers()) {
+            HBox player = displayPlayer(p);
+            roster.getChildren().add(player);
+        }
+
+        return roster;
+    }
+
+    // Modelled after https://stackoverflow.com/questions/24463064/javafx8-vbox-center-image
+    private HBox displayPlayer(Player p) {
+        String fileName = "C:\\Users\\Lorenzo Bisceglia\\Google Drive\\1 - School\\1 - BCS\\CPSC 210\\Project\\projectw1_team29\\playerPhotos\\" + p.getPlayerID() + ".jpg";
+
+        HBox record = new HBox(10);
+        record.setAlignment(Pos.CENTER_LEFT);
+
+        String title = p.getPlayerName() + " (" + p.getPosition() + ")";
+        Label player = new Label();
+        player.setText(title);
+        player.setFont(new Font(FONT, 12));
+
+        try {
+            Image img = new Image(new FileInputStream(fileName));
+            ImageView imageView = new ImageView(img);
+            imageView.setPreserveRatio(true);
+            imageView.setFitHeight(50);
+            record.getChildren().addAll(imageView);
+        } catch (FileNotFoundException e) {
+
+        }
+
+        record.getChildren().addAll(player);
+        return record;
+    }
+
     private void setupDraftMenu() {
 
         setupPlayerComboBox();
@@ -205,19 +259,19 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         overallStandingsLabel.setTextAlignment(LEFT);
 
         Label weeklyStandingsLabel = new Label();
-        weeklyStandingsLabel.setText("Last Week (Week " + (fantasyManager.currentWeek()-1) + ")" + displayThisWeeksLeaders());
+        weeklyStandingsLabel.setText("Last Week (Week " + (fantasyManager.currentWeek() - 1) + ")" + displayThisWeeksLeaders());
         weeklyStandingsLabel.setFont(labelFont);
         weeklyStandingsLabel.setTextAlignment(LEFT);
 
-        ScrollPane overallScroll = new ScrollPane();
+        ScrollPane overallScroll = new ScrollPane(displayAllTeams());
 
         HBox rankingsLayout = new HBox(75);
         rankingsLayout.setAlignment(Pos.CENTER);
-        rankingsLayout.getChildren().addAll(overallStandingsLabel,weeklyStandingsLabel);
+        rankingsLayout.getChildren().addAll(overallStandingsLabel, weeklyStandingsLabel);
 
         VBox standingsLayout = new VBox(10);
         standingsLayout.setAlignment(Pos.CENTER);
-        standingsLayout.getChildren().addAll(standingsLabel, rankingsLayout, rosterLabel, btnBackStandings);
+        standingsLayout.getChildren().addAll(standingsLabel, rankingsLayout, rosterLabel, overallScroll, btnBackStandings);
 
         standingsMenu = new Scene(standingsLayout, WIDTH, HEIGHT);
     }
@@ -225,14 +279,14 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private String displayOverallLeaders() {
         List<Team> teams = fantasyManager.getLeague().getTeams();
         //Modelled after Stack Overflow post: https://stackoverflow.com/questions/19471005/sorting-an-arraylist-of-objects-alphabetically
-        Collections.sort(teams,Comparator.comparing(Team :: getOverallFantasyPoints).reversed());
+        Collections.sort(teams, Comparator.comparing(Team::getOverallFantasyPoints).reversed());
         return printOverallLeaders(teams);
     }
 
     private String displayThisWeeksLeaders() {
         List<Team> teams = fantasyManager.getLeague().getTeams();
         //Modelled after Stack Overflow post: https://stackoverflow.com/questions/19471005/sorting-an-arraylist-of-objects-alphabetically
-        Collections.sort(teams,Comparator.comparing(Team :: getCurrentWeekFantasyPoints).reversed());
+        Collections.sort(teams, Comparator.comparing(Team::getCurrentWeekFantasyPoints).reversed());
         return printWeekLeaders(teams);
     }
 
@@ -241,7 +295,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         String overall = "";
         double previous = 0;
         int i = 1;
-        for(Team t : teams) {
+        for (Team t : teams) {
             if (t.getOverallFantasyPoints() < previous) {
                 i++;
             }
@@ -258,7 +312,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         String week = "";
         double previous = 0;
         int i = 1;
-        for(Team t : teams) {
+        for (Team t : teams) {
             if (t.getCurrentWeekFantasyPoints() < previous) {
                 i++;
             }
@@ -273,7 +327,6 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private void updateStandingsMenu() {
         //TODO: FILL THIS IN
     }
-
 
 
     private void concludeFantasyDraft() {
