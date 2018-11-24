@@ -56,6 +56,8 @@ public class LeagueInitializer extends FileParser implements Serializable {
 
             league.setAvailablePlayers(availablePlayers);
 
+            downloadAvailablePlayersPhotos(availablePlayers);
+
         } catch (FileNotFoundException e) {
             System.out.println("Available players pool not found.");
             Set<Player> availablePlayers = new HashSet<>();
@@ -66,6 +68,34 @@ public class LeagueInitializer extends FileParser implements Serializable {
 
             Set<Player> availablePlayers = new HashSet<>();
             league.setAvailablePlayers(availablePlayers);
+        }
+    }
+
+    // Modelled after https://stackoverflow.com/questions/5882005/how-to-download-image-from-any-web-page-in-java
+    //https://stackoverflow.com/questions/10292792/getting-image-from-url-java
+    private void downloadAvailablePlayersPhotos(Set<Player> availablePlayers) {
+        String savePath = "playerPhotos/";
+        try {
+        for (Player p : availablePlayers) {
+            String link = "https://nhl.bamcontent.com/images/headshots/current/168x168/" + p.getPlayerID() + "@2x.jpg";
+            URL url = new URL(link);
+            InputStream is = new BufferedInputStream(url.openStream());
+            OutputStream os = new FileOutputStream(savePath+ p.getPlayerID() + ".jpg");
+
+            byte[] b = new byte[2048];
+            int length;
+
+            while ((length = is.read(b)) != -1) {
+                os.write(b, 0, length);
+            }
+
+            is.close();
+            os.close();
+
+        }
+
+        } catch (IOException e) {
+
         }
     }
 
