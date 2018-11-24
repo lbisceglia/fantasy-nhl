@@ -131,7 +131,7 @@ public class DraftManager implements Serializable {
                     players.remove(p);
                     playerPool.remove(p);
                     fantasyManager.addPlayerStats(p, t);
-                    System.out.println("Success! " + p.getPlayerName() + " was added to " + t.getTeamName() + ".");
+//                    System.out.println("Success! " + p.getPlayerName() + " was added to " + t.getTeamName() + ".");
                     break;
                 } catch (InvalidDraftChoiceException e) {
 

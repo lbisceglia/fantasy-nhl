@@ -166,16 +166,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnSubmitDraft.setOnAction(e -> {
             selectPlayer();
             if (currentDraftPosition >= draftOrder.size()) {
-
-                fantasyManager.setDrafted();
-                updateLeague();
-
-                returnToMainMenu();
-
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Fantasy Draft");
-                alert.setContentText("That concludes the fantasy draft! Good luck to all players!");
-                alert.showAndWait();
+                concludeFantasyDraft();
             } else {
                 updateDraftMenu();
             }
@@ -190,7 +181,26 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         draftLayout.getChildren().addAll(draftLabel, selectionLabel, playersNeededLabel, playersCombo, btnSubmitDraft);
 
         draftMenu = new Scene(draftLayout, WIDTH, HEIGHT);
+    }
 
+    private void setupStandingsMenu() {
+        
+    }
+
+
+
+    private void concludeFantasyDraft() {
+        fantasyManager.setDrafted();
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Fantasy Draft");
+        if (fantasyManager.getDraftManager().getDraftType().equals(AutoDraft)) {
+            alert.setContentText("That concludes the fantasy AutoDraft! Please click the 'Standings' button to see your team. Good luck to all players!");
+        } else {
+            alert.setContentText("That concludes the fantasy draft! Good luck to all players!");
+        }
+        alert.showAndWait();
+        returnToMainMenu();
     }
 
     private void selectDraftTypeAndBeginDraft() {
@@ -246,7 +256,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private void updateDraftLabels() {
         Team team = draftOrder.get(currentDraftPosition);
-        selectionLabel.setText("Selection " + (currentDraftPosition + 1) + ": " + team.getTeamName());
+        selectionLabel.setText("Selection " + (currentDraftPosition + 1) + " of " + draftOrder.size() + ": " + team.getTeamName());
         selectionLabel.setFont(new Font(FONT, 24));
         selectionLabel.setTextAlignment(CENTER);
 
@@ -276,14 +286,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
             if (fantasyManager.getDraftManager().getDraftType().equals(DraftManager.DraftType.AutoDraft)) {
                 fantasyManager.getDraftManager().autoDraft(draftOrder, fantasyManager);
+                concludeFantasyDraft();
             } else {
                 window.setScene(draftMenu);
-//                int i = 1;
-//                for (Team t : draftList) {
-//                    System.out.println("\n" + " Selection " + i + ": " + t.getTeamName() + "\n");
-//                    System.out.println(fantasyManager.getDraftManager().getDraftValidator().playersNeededByPosition(t));
-//                    selectPlayer(t);
-//                    i++;
             }
 
         } catch (ImpossibleDraftException e) {
@@ -356,6 +361,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnDeleteTeam.setDisable(!teamCanBeRemoved());
         btnDraft.setDisable(!leagueCanDraft());
         btnAdvanceWeek.setDisable(!(leagueIsDrafted() && leagueCanAdvance()));
+        btnViewStandings.setDisable(!leagueIsDrafted());
     }
 
     private boolean atLeastOneTeam() {
@@ -597,8 +603,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         });
 
         btnViewStandings = new Button();
-        btnViewStandings.setText("View Teams");
+        btnViewStandings.setText("Standings");
         btnViewStandings.setFont(btnFont);
+        btnViewStandings.setDisable(!leagueIsDrafted());
         btnViewStandings.setOnAction(e -> {
 
         });
