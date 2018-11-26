@@ -193,16 +193,16 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
         String pts = new DecimalFormat("#.#").format(p.calculateOverallFantasyPoints(fantasyManager.currentWeek()-1));
 
-        String title = p.getPlayerName() + " (" + p.getPosition() + ")" + " - " + pts + " Fantasy Points";
+        String title = p.getPlayerName() + " (" + p.getPosition() + ")" + "\n" + pts + " Fantasy Points";
         Label player = new Label();
         player.setText(title);
-        player.setFont(new Font(FONT, 20));
+        player.setFont(new Font(FONT, 18));
 
         try {
             Image img = new Image(new FileInputStream(fileName));
             ImageView imageView = new ImageView(img);
             imageView.setPreserveRatio(true);
-            int radius = 50;
+            int radius = 72;
 
             Circle circle = new Circle(radius);
             circle.setFill(new ImagePattern(img));
