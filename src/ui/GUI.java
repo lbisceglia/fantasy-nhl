@@ -191,7 +191,9 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         HBox record = new HBox(15);
         record.setAlignment(Pos.CENTER_LEFT);
 
-        String title = p.getPlayerName() + " (" + p.getPosition() + ")";
+        String pts = new DecimalFormat("#.#").format(p.calculateOverallFantasyPoints(fantasyManager.currentWeek()-1));
+
+        String title = p.getPlayerName() + " (" + p.getPosition() + ")" + " - " + pts + " Fantasy Points";
         Label player = new Label();
         player.setText(title);
         player.setFont(new Font(FONT, 20));
@@ -200,7 +202,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             Image img = new Image(new FileInputStream(fileName));
             ImageView imageView = new ImageView(img);
             imageView.setPreserveRatio(true);
-            int radius = 72;
+            int radius = 50;
 
             Circle circle = new Circle(radius);
             circle.setFill(new ImagePattern(img));
@@ -224,7 +226,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnSubmitDraft.setText("Draft Player");
         btnSubmitDraft.setFont(btnFont);
         btnSubmitDraft.setOnAction(e -> {
-            selectPlayer();
+             selectPlayer();
             if (currentDraftPosition >= draftOrder.size()) {
                 concludeFantasyDraft();
             } else {
@@ -444,6 +446,14 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
     private void addPlayerToFantasyTeam(Team team, Player player) {
         team.addPlayer(player);
+        fantasyManager.getLeague().getAvailablePlayers().remove(player);
+        try {
+            fantasyManager.addPlayerStats(player, team);
+        } catch (IOException e){
+
+        }
+//        fantasyManager.getLeague().getTeams().get
+        // TODO: ADD THE PLAYER'S STATS TO THE TEAM
         fantasyManager.getLeague().getAvailablePlayers().remove(player);
 
         String msg = "Success! " + player.getPlayerName() + " was added to " + team.getTeamName() + ".";

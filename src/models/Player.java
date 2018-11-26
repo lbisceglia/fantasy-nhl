@@ -57,6 +57,16 @@ public class Player extends Subject implements Serializable {
         }
     }
 
+    public double calculateOverallFantasyPoints(int week) {
+        double pts = 0;
+        for (Stat s : stats) {
+            if (s.getFantasyWeek() <= week) {
+                pts += s.getFantasyPoints();
+            }
+        }
+        return pts;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
