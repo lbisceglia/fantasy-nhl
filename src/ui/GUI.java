@@ -853,7 +853,8 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Rules");
-        String msg = "How to Play:\n" +
+        alert.setHeaderText("How to Play");
+        String msg = 
                 "- The league consists of 4 teams\n" +
                 "- Each team has their 'starting six' players:\n" +
                 "   - 1 Center\n" +
