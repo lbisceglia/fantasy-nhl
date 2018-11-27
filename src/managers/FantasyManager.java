@@ -22,10 +22,10 @@ import static models.Stat.StatType.*;
 
 public class FantasyManager implements Serializable {
     private static final String savePath = "C:/Users/Lorenzo Bisceglia/Google Drive/1 - School/1 - BCS/CPSC 210/Project/projectw1_team29/src";
-    private static final double POINTS_PER_GOAL = 6;
-    private static final double POINTS_PER_ASSIST = 4;
-    private static final double POINTS_PER_SAVE = 0.6;
-    private static final double POINTS_PER_WIN = 5;
+    public static final double POINTS_PER_GOAL = 6;
+    public static final double POINTS_PER_ASSIST = 4;
+    public static final double POINTS_PER_SAVE = 0.6;
+    public static final double POINTS_PER_WIN = 5;
     public static final int FANTASY_WEEKS = 24;
     public static final String CURRENT_SEASON = "20182019";
 

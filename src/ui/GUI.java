@@ -34,7 +34,7 @@ import java.util.*;
 import static javafx.scene.text.TextAlignment.CENTER;
 import static javafx.scene.text.TextAlignment.LEFT;
 import static managers.DraftManager.DraftType.*;
-import static managers.FantasyManager.FANTASY_WEEKS;
+import static managers.FantasyManager.*;
 import static models.League.MAX_PARTICIPANTS;
 import static models.League.MIN_PARTICIPANTS;
 
@@ -74,6 +74,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
     private Button btnViewStandings;
     private Button btnDraft;
     private Button btnAdvanceWeek;
+    private Button btnRules;
     private Button btnSave;
     private Button btnQuit;
 
@@ -191,7 +192,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         HBox record = new HBox(15);
         record.setAlignment(Pos.CENTER_LEFT);
 
-        String pts = new DecimalFormat("#.#").format(p.calculateOverallFantasyPoints(fantasyManager.currentWeek()-1));
+        String pts = new DecimalFormat("#.#").format(p.calculateOverallFantasyPoints(fantasyManager.currentWeek() - 1));
 
         String title = p.getPlayerName() + " (" + p.getPosition() + ")" + "\n" + pts + " Fantasy Points";
         Label player = new Label();
@@ -226,7 +227,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         btnSubmitDraft.setText("Draft Player");
         btnSubmitDraft.setFont(btnFont);
         btnSubmitDraft.setOnAction(e -> {
-             selectPlayer();
+            selectPlayer();
             if (currentDraftPosition >= draftOrder.size()) {
                 concludeFantasyDraft();
             } else {
@@ -286,14 +287,14 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             }
         });
 
-        teamStandingCB.setOnAction(e-> {
+        teamStandingCB.setOnAction(e -> {
             Team t = teamStandingCB.getValue();
             standingScroll.setContent(displayRoster(t));
             window.setScene(standingsMenu);
         });
 
         standingScroll = new ScrollPane(new VBox());
-        standingScroll.setPrefViewportHeight(HEIGHT/3);
+        standingScroll.setPrefViewportHeight(HEIGHT / 3);
 
         HBox rankingsLayout = new HBox(50);
         rankingsLayout.setAlignment(Pos.CENTER);
@@ -449,7 +450,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         fantasyManager.getLeague().getAvailablePlayers().remove(player);
         try {
             fantasyManager.addPlayerStats(player, team);
-        } catch (IOException e){
+        } catch (IOException e) {
 
         }
 //        fantasyManager.getLeague().getTeams().get
@@ -818,6 +819,13 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
             updateWeekLabel();
         });
 
+        btnRules = new Button();
+        btnRules.setText("Rules");
+        btnRules.setFont(btnFont);
+        btnRules.setOnAction(e -> {
+            displayRules();
+        });
+
         btnSave = new Button();
         btnSave.setText("Save & Quit");
         btnSave.setFont(btnFont);
@@ -836,9 +844,32 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
 
         VBox mainMenuLayout = new VBox(10);
         mainMenuLayout.setAlignment(Pos.CENTER);
-        mainMenuLayout.getChildren().addAll(mainLabel, weeksLabel, btnAddTeam, btnDeleteTeam, btnViewStandings, btnDraft, btnAdvanceWeek, btnSave, btnQuit);
+        mainMenuLayout.getChildren().addAll(mainLabel, weeksLabel, btnAddTeam, btnDeleteTeam, btnViewStandings, btnDraft, btnAdvanceWeek, btnRules, btnSave, btnQuit);
 
         mainMenu = new Scene(mainMenuLayout, WIDTH, HEIGHT);
+    }
+
+    private void displayRules() {
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Rules");
+        String msg = "How to Play:\n" +
+                "- The league consists of 4 teams\n" +
+                "- Each team has their 'starting six' players:\n" +
+                "   - 1 Center\n" +
+                "   - 1 Right Winger\n" +
+                "   - 1 Left Winger \n" +
+                "   - 2 Defencemen\n" +
+                "   - 1 Goalie\n" +
+                "- Fantasy Points are awarded for 4 statistical categories:\n" +
+                "   - Goals (" + POINTS_PER_GOAL + ", skaters only)\n" +
+                "   - Assists (" + POINTS_PER_ASSIST + ", skaters only)\n" +
+                "   - Saves (" + POINTS_PER_SAVE + ", goalies only)\n" +
+                "   - Wins (" + POINTS_PER_GOAL + ", goalies only)\n" +
+                "- The team with the most fantasy points wins!\n";
+
+        alert.setContentText(msg);
+        alert.showAndWait();
     }
 
     @Override
