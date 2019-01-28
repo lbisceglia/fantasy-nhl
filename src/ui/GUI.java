@@ -854,7 +854,7 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Rules");
         alert.setHeaderText("How to Play");
-        String msg = 
+        String msg =
                 "- The league consists of 4 teams\n" +
                 "- Each team has their 'starting six' players:\n" +
                 "   - 1 Center\n" +
@@ -924,5 +924,4 @@ public class GUI extends Application implements Loadable, Saveable, Serializable
         League league = new League();
         this.fantasyManager = new FantasyManager(league);
     }
-
 }
